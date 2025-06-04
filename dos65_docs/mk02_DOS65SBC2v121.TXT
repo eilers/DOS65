@@ -1,0 +1,11 @@
+REM DOS/65 for the SBC2
+REM 08/29/2017
+
+del *.bin
+del *.obj
+del *.lst
+DEL *.HEX
+
+C:\WDC\TOOLS\BIN\WDC02AS.EXE -g -l -DUSING_02 DOS65SBC2V121.asm
+C:\WDC\TOOLS\BIN\WDCLN.EXE -g -sz -t -HI -D6FFF,BFFF DOS65SBC2V121
+pause

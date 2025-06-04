@@ -1,0 +1,11 @@
+DOS/65 RELEASE NOTES
+
+BASELINE - 26 February 2015
+
+REV A - 27 Feruary 2015 - corrected error in Supplement regarding CCM size and change from V2.1.
+
+REV B - 2 March 2015 - corrected bug in SYSGEN that would not complete track calculations when track size was greater than 255 128-byte records. Error only affected setup in preparation for writing the new system image to a disk. Updated SYSGEN is SYSGN301.ASM. Also replaced MONITOR and SIM code with latest that boot directly from a CF card. Minor change to Copy3 (Copy301.ASM) to use X=0 call to PEM for a warm boot.
+
+REV C - 1 February 2016 - corrected file name parsing error in SYSGEN. Updated SYSGEN is SYSGN302.ASM
+
+REV D - 4 March 2021 - replaced COPY301 with UCOPY302.ASM as COPY.COM (V2.1) is needed even when running V3.0 and UCOPY.COM is needed in V3.0 to copy files from one user area to another, replaced SUBMIT.ASM with SUB300.ASM for naming compliance only, and replaced SD102.ASM with SD103.ASM to resolve conflict associated with command options. V3 Supplement revised to correct my address and current licensing provisions. 

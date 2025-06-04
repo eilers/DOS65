@@ -1,0 +1,13 @@
+                       READ ME THIRD
+
+DOS/65 V3.0 is backward-compatible with V2.1. Said another way, V3.0 will execute the V2.1 transients exactly the same as they would be executed under V2.1. The two known exceptions to this rule are the BASIC-E file status program that will not execute correctly under V3.0 and the SD program that must be configured for either V3.0 or V2.1 before it is assembled.
+
+As a consequence the V3.0 releases do not repeat all of the various transients that are released as part of the 2.1. Those transients can all be loaded into a V3.0 system and will run as expected.
+
+One approach to bringing up a new system under V3.0 is to actually bring it up as a V2.1 system and then run SYSGEN for V3.0 on top of V2.1.
+
+Additional information is available in the V3.0 documentation.
+
+Thanks,
+
+Rich Leary

@@ -1,0 +1,17 @@
+                       READ ME FIRST
+
+One key concept in DOS/65 is that of the transient execution area (TEA). TEA is the start of the RAM area in which the user can execute programs. It is fixed for a given configuration although alternative addresses are available as driven by the users hardware and software configuration.
+
+The most common TEA start is $200. This value is valid for OSI, SBC2, W65C02SXB, S-100, and most other general-purpose single board computers.
+
+The one alternative TEA start that is currently supported is $800. This value is valid for Commodore 64 and similar computers.
+
+If an address other than one of these two values is desired it requires special effort on my part to generate the executables. It can be done but I hope potential users recognize that as an unusual circumstance.
+
+Accordingly the releases are organized into two distinct groups. The first is for TEA $200 and the second is for TEA $800. Choose which you wish to use for your situation and ensure that you download only source code, object code, and binaries for that group.
+
+All files presented in the web site are for TEA $200 except for those presented in the C64 page.
+
+Thanks,
+
+Rich Leary

@@ -1,0 +1,24 @@
+                       READ ME SECOND
+
+DOS/65 is structured in a modular way. The module that provides the direct human machine interface is called the Console Command Module (CCM). It is the module that accepts user commands, loads programs, execute programs, and in version 3 processes batch commands. The module that is the core of the system is the Primitive Execution Module (PEM). It is this module that manages the disk system, handles console input and output, and provides for other core functions in the system. These first two modules are the same for a given TEA except for a single byte in CCM that can be used to change the directory display width.
+
+The module that must be customized for a given users configuration is the System Interface Module (SIM). This module is also sometimes coupled with ROM resident firmware on some systems called the MONITOR but as far as the rest of the system is concerned the interfaces are all in the hands of SIM.
+
+It is almost impossible for me to provide a SIM that is customized to each users configuration. For example although I have been using an S-100 6502 CPU for three decades most other users of even the same device would have a unique SIM because of their floppy disk, hard disk, and console functionality.
+
+I provide the following SIM and in some cases monitor packages:
+	1. Commodore 64 with two 1541 drives (.D64 images included)
+	2. OSI C1P with two SSSD 5.25" floppy drives (WinOSI disk
+		images included)
+	3. S-100 with S100 Computers dual CF/IDE drive controller
+		and S100 Computers dual serial I/O
+	4. Daryl Rictor SBC2 with my SPI/SD interface to a micro SD
+	5. WDC W65C02SXB with my SPI/SD interface to a micro SD
+
+The SBC2 and W65C02SXB packages are for V3.0 ROM only. The Commodore 64 package is currently only for V2.1 but a V3.0 package is in work. Both V2.1 and V3.0 packages are provided for the C1P and S-100 systems.
+
+Normally I do not provide floppy, CF, or Micro SD media.
+
+Thanks,
+
+Rich Leary
