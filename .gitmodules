@@ -1,0 +1,3 @@
+[submodule "bsa"]
+	path = bsa
+	url = https://github.com/Edilbert/BSA.git
