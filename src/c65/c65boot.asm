@@ -8,6 +8,9 @@
 ;		increased to 52K
 ;C64LOAD does not know anything about load address or
 ;amount to load except as provided by this record
+	*= 0
+	.STORE 0,5,"c65boot.bin"
+
 ;
 ;data that is used to derive other information
 ;CCM & PEM length are fixed for DOS/65 2.1
@@ -25,7 +28,7 @@ SIMLNG	=	2560	;length of SIM in bytes
 ;start address for CCM
 START	.word	MEMSIZ-CCMLNG-PEMLNG-SIMLNG
 ;number of 128 byte records to load
-LENGTH	.byte	CCMLNG+PEMLNG+SIMLNG/128
+LENGTH	.byte	(CCMLNG+PEMLNG+SIMLNG)/128
 ;cold boot entry point
 CBOOT	.word	MEMSIZ-SIMLNG
 ;rest of 128 byte record is ignored

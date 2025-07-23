@@ -4,9 +4,7 @@
 ;Version 1.0
 ;miscellaneous definitions
 
-Start = $200F
-;.STORE <startaddress>,<length>,"filename"
-.STORE Start,Ende-Start,"c65loader.bin"
+Start = $2001
 
 CR	=	$0D	;carriage return
 ;C64 KERNAL entry points
@@ -20,13 +18,25 @@ BASIN	=	$FFCF	;input from channel
 BSOUT	=	$FFD2	;output to channel
 CLALL	=	$FFE7	;close all files & channels
 ;start of actual load
+	*=	Start		
+	.LOAD			; Add load address
+	;.STORE <startaddress>,<length>,"filename"
+	.STORE Start,Ende-Start,"c65loader.prg"
+
 ;This is in BASIC data area so it must be loaded as a BASIC
-;file at $2000 that then jumps to $200F
-	*=	Start
+;file at $2001 that then jumps into loader
+; Basic header SYS $200F
+	.word basend 	        ; next BASIC line
+	.word $000A 	        ; line #
+	.byte $fE,$02,$30	; BANK 0
+	.byte $3A,$9E		; :SYS
+	.byte "$2012"; address as string
+	.byte 0 		; end of line
+basend:	.byte 0,0 	; end of basic
 	SEI		;disable interrupts
 ;set up C65 memory by disabling BASIC ROM & Character ROM
 ;by writing into $D030 
- 	LDA	#%10000100
+ 	LDA	#%11100100
  	STA	$D030
 ;close everything - including whatever BASIC did or user did
 	JSR	CLALL	;close all files & channels
@@ -147,4 +157,5 @@ LENGTH
 CBOOT
 	*=	*+2	
 	.end
-Ende; End label for BSA Assembler
+; End label for BSA Assembler
+Ende 	
