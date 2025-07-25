@@ -2,8 +2,8 @@
 ;C65 file that is loaded and executed to start DOS/65
 ;derived from C64L210.ASM
 ;Version 1.0
+;Use BSA (Bit Shifters's Assembler) to build!
 ;miscellaneous definitions
-
 Start = $2001
 
 CR	=	$0D	;carriage return
@@ -17,6 +17,26 @@ CLRCH	=	$FFCC	;restore default channel
 BASIN	=	$FFCF	;input from channel
 BSOUT	=	$FFD2	;output to channel
 CLALL	=	$FFE7	;close all files & channels
+CHROUT	=	$FFD2	;Char Out
+
+; ZP Adresses
+LTXTSTRT	=	$FB
+HTXTSTRT	=	$FC
+
+; Macros
+MACRO PrintTxt(ADR)
+	LDA	#<ADR
+	STA	LTXTSTRT
+	LDA	#>ADR
+	STA	HTXTSTRT
+	JSR	PrintText
+ENDMAC
+
+MACRO PrintHex(ADR, INCREMENT)
+	LDA	ADR + INCREMENT
+	JSR	PrintHexByte	
+ENDMAC
+
 ;start of actual load
 	*=	Start		
 	.LOAD			; Add load address
@@ -38,6 +58,8 @@ basend:	.byte 0,0 	; end of basic
 ;by writing into $D030 
  	LDA	#%11100100
  	STA	$D030
+;Print init text
+	PrintTxt(INITTXT)
 ;close everything - including whatever BASIC did or user did
 	JSR	CLALL	;close all files & channels
 ;set up read from drive 8
@@ -68,6 +90,19 @@ BLOOP	JSR	BASIN	;input from channel
 	INX
 	BNE	BLOOP	;loop until one sector done
 ;at this point we know where and how much to load
+; Print data from boot record
+; 1. Start Address
+	PrintTxt(STRTTXT)
+	PrintHex(START, 1)
+	PrintHex(START, 0)
+; 2. Length
+	PrintTxt(LGTHTXT)
+	PrintHex(LENGTH, 0)	
+; 3. CBOOT-> Cold Boot Start Address
+	PrintTxt(BOOTTXT)
+	PrintHex(CBOOT, 1)
+	PrintHex(CBOOT, 0)
+	BRK
 ;set up address and count for remaining but
 	SEC		;back up 128 bytes
 	LDA	START	;set up store
@@ -140,12 +175,72 @@ OP1	LDA	L8AA,X	;point to character in name
 	JSR	CHKIN	;set channel in
 	LDX	#0
 	RTS
+
+; Write Text to screen. 
+; LTXTSTRT: < Start address of text
+; HTXTSTRT: > Start address of text
+PrintText:
+	LDY #0			; Index into string
+PrtLoop	LDA (LTXTSTRT),Y	; Load character from text (zp indirect)
+	BEQ PrintEx		; If 0, end of string
+	JSR CHROUT		; Print character via CHROUT
+	INY
+	BNE PrtLoop		; Repeat
+PrintEx	RTS
+
+; Print byte as Text to screen.
+; LTXTSTRT: < Address of Byte
+; LTXTSTRT: < Address of Byte
+
+;-------------------------
+; print_hex_byte:
+; Input: A = byte to print as hex (2 chars)
+;-------------------------
+PrintHexByte:
+	PHA                ; Save A
+	LSR A              ; Shift right 4 bits (get high nibble)
+	LSR A
+	LSR A
+	LSR A
+	JSR nybble_to_ascii
+	JSR CHROUT          ; Print high nibble
+
+	PLA                ; Restore A
+	AND #$0F           ; Mask low nibble
+	JSR nybble_to_ascii
+	JSR CHROUT          ; Print low nibble
+	RTS
+
+;-------------------------
+; nybble_to_ascii:
+; Input: A = 0-15
+; Output: A = ASCII char ('0'-'9','A'-'F')
+;-------------------------
+nybble_to_ascii:
+	CMP #$0A
+	BCC num
+	ADC #$06           ; Add 6 to go from '9'+1 to 'A'
+num     CLC
+	ADC #$30
+	RTS
+
+;-------------------------
+text:   .text "VALUE: "
+	.byte 0
+
+value:  .byte $3A          ; Value to display (change to test)	
+	
 ;data area
 ;start reading at track 1 and sector 0
 L8AA	.byte	"U1:2 0 "
 TRACK	.byte	"1 "
 SECTOR	.byte	" 0",CR
 L8B5	.byte	"#"	;file name for random access
+INITTXT	.byte	"DOS/65 - BOOTLOADER FOR C65",0
+STRTTXT	.byte	"START ADR: ",0
+LGTHTXT	.byte	"LENGTH   : ",0
+BOOTTXT	.byte	"BOOT ADR : ",0
+
 ;128 byte data area for BOOT record
 ;start address
 START
