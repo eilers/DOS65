@@ -37,6 +37,32 @@ MACRO PrintHex(ADR, INCREMENT)
 	JSR	PrintHexByte	
 ENDMAC
 
+MACRO break()
+	JSR CLRCH
+	BRK
+ENDMAC
+
+MACRO initdisk()
+;first open command channel
+	LDA	#15	;logical file number 15
+	LDX	#8	;device 8
+	LDY	#15	;secondary address 15
+	JSR	SETLFS	;set LA, FA, SA
+	LDA	#0	;zero length file name
+	JSR	SETNAM	;set length & file name address
+	JSR	OPEN	;open logical file
+;now set up for random access for file 2
+	LDA	#2	;logical file number 2
+	LDX	#8	;device 8
+	LDY	#2	;secondary address 2
+	JSR	SETLFS	;set LA, FA, SA
+	LDA	#1	;name is one char long
+	LDX	#<L8B5	;Filename "#"
+	LDY	#>L8B5 
+	JSR	SETNAM	;set length & file name address
+	JSR	OPEN	;open logical file
+ENDMAC
+
 ;start of actual load
 	*=	Start		
 	.LOAD			; Add load address
@@ -63,24 +89,7 @@ basend:	.byte 0,0 	; end of basic
 ;close everything - including whatever BASIC did or user did
 	JSR	CLALL	;close all files & channels
 ;set up read from drive 8
-;first open command channel
-	LDA	#15	;logical file number 15
-	LDX	#8	;device 8
-	LDY	#15	;secondary address 15
-	JSR	SETLFS	;set LA, FA, SA
-	LDA	#0	;zero length file name
-	JSR	SETNAM	;set length & file name address
-	JSR	OPEN	;open logical file
-;now set up for random access for file 2
-	LDA	#2	;logical file number 2
-	LDX	#8	;device 8
-	LDY	#2	;secondary address 2
-	JSR	SETLFS	;set LA, FA, SA
-	LDA	#1	;name is one char long
-	LDX	#<L8B5	;Filename "#"
-	LDY	#>L8B5 
-	JSR	SETNAM	;set length & file name address
-	JSR	OPEN	;open logical file
+	initdisk()
 ;set up address and operation and set x=0
 	JSR	SETUP
 ;first read 128 byte record containing data needed
@@ -95,14 +104,19 @@ BLOOP	JSR	BASIN	;input from channel
 	PrintTxt(STRTTXT)
 	PrintHex(START, 1)
 	PrintHex(START, 0)
+	PrintTxt(NL)
 ; 2. Length
 	PrintTxt(LGTHTXT)
 	PrintHex(LENGTH, 0)	
+	PrintTxt(NL)
 ; 3. CBOOT-> Cold Boot Start Address
 	PrintTxt(BOOTTXT)
 	PrintHex(CBOOT, 1)
 	PrintHex(CBOOT, 0)
-	BRK
+	PrintTxt(NL)
+	PrintTxt(LOOSTXT)
+; Reinit disk access
+	initdisk()
 ;set up address and count for remaining but
 	SEC		;back up 128 bytes
 	LDA	START	;set up store
@@ -180,6 +194,7 @@ OP1	LDA	L8AA,X	;point to character in name
 ; LTXTSTRT: < Start address of text
 ; HTXTSTRT: > Start address of text
 PrintText:
+	JSR CLRCH
 	LDY #0			; Index into string
 PrtLoop	LDA (LTXTSTRT),Y	; Load character from text (zp indirect)
 	BEQ PrintEx		; If 0, end of string
@@ -198,6 +213,9 @@ PrintEx	RTS
 ;-------------------------
 PrintHexByte:
 	PHA                ; Save A
+	JSR CLRCH
+	PLA
+	PHA
 	LSR A              ; Shift right 4 bits (get high nibble)
 	LSR A
 	LSR A
@@ -236,10 +254,12 @@ L8AA	.byte	"U1:2 0 "
 TRACK	.byte	"1 "
 SECTOR	.byte	" 0",CR
 L8B5	.byte	"#"	;file name for random access
-INITTXT	.byte	"DOS/65 - BOOTLOADER FOR C65",0
-STRTTXT	.byte	"START ADR: ",0
-LGTHTXT	.byte	"LENGTH   : ",0
-BOOTTXT	.byte	"BOOT ADR : ",0
+INITTXT	.byte	"DOS/65 - BOOTLOADER FOR C65",141,"LOAD MBR ...",141,0
+STRTTXT	.byte	"START ADR: $",0
+LGTHTXT	.byte	"LENGTH   : $",0
+BOOTTXT	.byte	"BOOT ADR : $",0
+LOOSTXT .byet	141,"Load OS..", 0
+NL      .byte	141,0
 
 ;128 byte data area for BOOT record
 ;start address
