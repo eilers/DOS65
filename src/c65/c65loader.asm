@@ -254,7 +254,7 @@ L8AA	.byte	"U1:2 0 "
 TRACK	.byte	"1 "
 SECTOR	.byte	" 0",CR
 L8B5	.byte	"#"	;file name for random access
-INITTXT	.byte	"DOS/65 - BOOTLOADER FOR C65",141,"LOAD MBR ...",141,0
+INITTXT	.byte	"DOS/65 - BOOTLOADER FOR Mega65",141,"LOAD MBR ...",141,0
 STRTTXT	.byte	"START ADR: $",0
 LGTHTXT	.byte	"LENGTH   : $",0
 BOOTTXT	.byte	"BOOT ADR : $",0
