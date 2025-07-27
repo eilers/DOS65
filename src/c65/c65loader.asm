@@ -104,16 +104,16 @@ BLOOP	JSR	BASIN	;input from channel
 	PrintTxt(STRTTXT)
 	PrintHex(START, 1)
 	PrintHex(START, 0)
-	PrintTxt(NL)
+	PrintTxt(NLTXT)
 ; 2. Length
 	PrintTxt(LGTHTXT)
 	PrintHex(LENGTH, 0)	
-	PrintTxt(NL)
+	PrintTxt(NLTXT)
 ; 3. CBOOT-> Cold Boot Start Address
 	PrintTxt(BOOTTXT)
 	PrintHex(CBOOT, 1)
 	PrintHex(CBOOT, 0)
-	PrintTxt(NL)
+	PrintTxt(NLTXT)
 	PrintTxt(LOOSTXT)
 ; Reinit disk access
 	initdisk()
@@ -254,12 +254,12 @@ L8AA	.byte	"U1:2 0 "
 TRACK	.byte	"1 "
 SECTOR	.byte	" 0",CR
 L8B5	.byte	"#"	;file name for random access
-INITTXT	.byte	"DOS/65 - BOOTLOADER FOR Mega65",141,"LOAD MBR ...",141,0
+INITTXT	.byte	"DOS/65 - BOOTLOADER FOR MEGA65",CR,"LOAD MBR ...",CR,0
 STRTTXT	.byte	"START ADR: $",0
 LGTHTXT	.byte	"LENGTH   : $",0
 BOOTTXT	.byte	"BOOT ADR : $",0
-LOOSTXT .byet	141,"Load OS..", 0
-NL      .byte	141,0
+LOOSTXT .byet	CR,"Load OS..", 0
+NLTXT   .byte	CR,0
 
 ;128 byte data area for BOOT record
 ;start address
