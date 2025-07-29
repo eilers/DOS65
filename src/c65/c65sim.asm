@@ -13,7 +13,7 @@
 ;		made iotype initialized to 1 & in fixed location
 ;		eliminated use of data in conout
 ;		corrected error near end of conin
-;		added jsr clall at cold boot start
+;		added jsr CLALL at cold boot start
 ;		forced function keys to return space
 ;		corrected error in read code after la3f
 ;		corrected & added drive select logic
@@ -74,7 +74,9 @@ nsects	=	length/128	;number sectors
 cr	=	$d		;carriage return
 lf	=	$a		;linefeed
 ;main program
-	*=	memlng-simlng	;start of sim
+Start	=	memlng-simlng
+	*=	Start	;start of sim
+	.STORE Start,Ende-Start,"c65sim.bin"
 ;jump vector used by pem
 sim	jmp	boot		;from cold start
 wboote	jmp	wboot		;from warm boot
@@ -139,7 +141,7 @@ opnmsg	.byte	cr,lf,"C64 52K DOS/65 2.15 "
 ;cold entry from loader
 boot
 ;first clear all files and channels
-	jsr	clall		;loader should do this but make sure
+	jsr	CLALL		;loader should do this but make sure
 ;now send a series of characters to screen to set it up
 	lda	#' '		;set cursor
 	sta	cursor		;to space
@@ -1043,5 +1045,5 @@ ckmpb
 ;deblocking buffer for dba
 hstbuf
 	*=	*+256		;256 byte sectors
-	.end
-	
+	.end	
+Ende 	

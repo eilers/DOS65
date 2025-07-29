@@ -13,3 +13,6 @@ c65loader.prg: c65loader.asm
 
 c65boot.bin: c65boot.asm
 	$(BSA) c65boot.asm
+
+c65sim.bin: c65sim.asm
+	$(BSA) -i c65sim.asm
