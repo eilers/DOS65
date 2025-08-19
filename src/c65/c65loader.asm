@@ -5,6 +5,7 @@
 ;Use BSA (Bit Shifters's Assembler) to build!
 ;miscellaneous definitions
 Start = $2001
+.CPU  45GS02 
 
 CR	=	$0D	;carriage return
 ;C64 KERNAL entry points
@@ -42,26 +43,30 @@ MACRO break()
 	BRK
 ENDMAC
 
-MACRO initdisk()
-;first open command channel
-	LDA	#15	;logical file number 15
-	LDX	#8	;device 8
-	LDY	#15	;secondary address 15
-	JSR	SETLFS	;set LA, FA, SA
-	LDA	#0	;zero length file name
-	JSR	SETNAM	;set length & file name address
-	JSR	OPEN	;open logical file
-;now set up for random access for file 2
-	LDA	#2	;logical file number 2
-	LDX	#8	;device 8
-	LDY	#2	;secondary address 2
-	JSR	SETLFS	;set LA, FA, SA
-	LDA	#1	;name is one char long
-	LDX	#<L8B5	;Filename "#"
-	LDY	#>L8B5 
-	JSR	SETNAM	;set length & file name address
-	JSR	OPEN	;open logical file
+MACRO EnableInterfaceRom()
+;	Use $D030 to map-in interface rom 
+;	by writing into $D030 
+ 	LDA	#%00100000
+ 	STA	$D030
 ENDMAC
+
+MACRO DisableInterfaceRom()
+;	Use $D030 to map-out all roms 
+;	by writing into $D030 
+ 	LDA	#%00000000
+ 	STA	$D030
+ENDMAC
+
+MACRO SetKernalOnly()
+	; Use MAP command to map in kernel only ($E000-EFFF)
+		LDA #%00000000
+		LDX #%00000000
+		LDY #%00000000
+		LDZ #%10000011
+		MAP
+		NOP
+ENDMAC
+
 
 ;start of actual load
 	*=	Start		
@@ -81,15 +86,14 @@ ENDMAC
 basend:	.byte 0,0 	; end of basic
 	SEI		;disable interrupts
 ;set up C65 memory by disabling BASIC ROM & Character ROM
-;by writing into $D030 
- 	LDA	#%11100100
- 	STA	$D030
+	EnableInterfaceRom()
+	SetKernalOnly()
 ;Print init text
 	PrintTxt(INITTXT)
 ;close everything - including whatever BASIC did or user did
 	JSR	CLALL	;close all files & channels
 ;set up read from drive 8
-	initdisk()
+	JSR	INITDSK
 ;set up address and operation and set x=0
 	JSR	SETUP
 ;first read 128 byte record containing data needed
@@ -116,7 +120,7 @@ BLOOP	JSR	BASIN	;input from channel
 	PrintTxt(NLTXT)
 	PrintTxt(LOOSTXT)
 ; Reinit disk access
-	initdisk()
+	JSR	INITDSK
 ;set up address and count for remaining but
 	SEC		;back up 128 bytes
 	LDA	START	;set up store
@@ -173,7 +177,8 @@ NO10	LDA	SECTOR+1
 NOTRK	INC	MSTORE+2	;bump load high byte
 	BNE	MAIN	;should never be 0 so loop
 ;load is done - get ready to do cold boot entry
-DONE	JMP	(CBOOT)	;jump to SIM cold boot entry
+DONE	DisableInterfaceRom()
+	JMP	(CBOOT)	;jump to SIM cold boot entry
 ;set up address and operation
 SETUP	LDX	#15	;set 15 as active channel out
 	JSR	CKOUT	;set channel out
@@ -188,6 +193,27 @@ OP1	LDA	L8AA,X	;point to character in name
 	LDX	#2	;set 2 as active channel in
 	JSR	CHKIN	;set channel in
 	LDX	#0
+	RTS
+
+INITDSK
+;first open command channel
+	LDA	#15	;logical file number 15
+	LDX	#8	;device 8
+	LDY	#15	;secondary address 15
+	JSR	SETLFS	;set LA, FA, SA
+	LDA	#0	;zero length file name
+	JSR	SETNAM	;set length & file name address
+	JSR	OPEN	;open logical file
+;now set up for random access for file 2
+	LDA	#2	;logical file number 2
+	LDX	#8	;device 8
+	LDY	#2	;secondary address 2
+	JSR	SETLFS	;set LA, FA, SA
+	LDA	#1	;name is one char long
+	LDX	#<L8B5	;Filename "#"
+	LDY	#>L8B5 
+	JSR	SETNAM	;set length & file name address
+	JSR	OPEN	;open logical file
 	RTS
 
 ; Write Text to screen. 
