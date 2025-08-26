@@ -1,4 +1,4 @@
-;sysgen
+-;sysgen
 ;version 2.19-S
 ;released:	30 november 1985 (2.10)
 ;last revised:
@@ -69,7 +69,7 @@ dflbuf	=	$128		;default buffer
 tea	=	$200		;tea start
 ccmlng	=	2048		;ccm length
 pemlng	=	3072		;pem length
-paglim	=	ccm+ccmlng+pemlng/256+1	;allow one page for sim
+paglim	=	((ccm+ccmlng+pemlng)/256)+1	;allow one page for sim
 ;zero page for setup
 	*=	pzstrt
 trknum				;current track
@@ -144,8 +144,12 @@ ctlx	=	$18		;cancel
 semico	=	$3b		;semicolon
 delete	=	$7f		;delete character
 numcmd	=	36		;number commands
+
+	.STORE Start,Ende-Start,"sysgn219.com"
+Start	=	tea
+
 ;main program
-	*=	tea
+	*=	Start		;start of tea
 	jmp	sysgen		;jump to main
 ;copyright notice
 	.byte	"COPYRIGHT (C) 2009 - "
@@ -478,8 +482,8 @@ gnbte	lda	#<btemsg	;send
 	sty	offset+1	;start
 	sta	lokim		;as is lower
 	sty	lokim+1		;limit
-	lda	#boot+128*256/256	;set
-	ldy	#boot+128/256	;upper
+	lda	#<(boot+128)	;set
+	ldy	#>(boot+128)	;upper
 	sta	hikim		;limit
 	sty	hikim+1		;then
 	jsr	xqread		;read file
@@ -542,9 +546,9 @@ gotopc	ldy	table3,x	;get length/flag
 	lda	(point),y	;high
 	cmp	#<paglim	;if at high limit
 	bcs	norelc		;do nothing
-	cmp	#tea+1/256	;if above
+	cmp	#>(tea+1)	;if above
 	bne	trylow		;lower limit
-	cpx	#tea+1*256/256	;then
+	cpx	#<(tea+1)	;then
 trylow	bcc	norelc		;do nothing
 	pha			;else save high
 	txa			;add offset
@@ -964,7 +968,7 @@ ctxt
 ;align code on half page inorder to assist in
 ;debugging and to allow jmp (xxxx) to be
 ;placed at word boundary.
-	*=	*/256*256+384
+	*=	((*/256)*256)+384
 ;-------------------------------
 ;dos/65 boot
 ;-------------------------------
@@ -1834,7 +1838,7 @@ cnbfpt	.byte	0		;buffer index
 dfldsk	.byte	0		;default drive
 tmpdsk	.byte	0		;temporary dvive
 ;align vector on word boundary
-	*=	*/2*2+2
+	*=	((*/2)*2)+2
 vector	.word	0		;execution vector
 count	.byte	0		;counter
 curpnt	.byte	0		;input parse start
@@ -3381,7 +3385,7 @@ bufpsn	.byte	0		;input buffer position
 exrwfl	.byte	0		;extend flag
 tmpdrv	.byte	0		;temporary drive number
 ;align xqtvec on word boundary
-	*=	*/2*2+2
+	*=	((*/2)*2)+2
 xqtvec	.word	0		;command vector
 countr	.word	0		;record counter
 	.byte	0		;overflow
@@ -3442,3 +3446,4 @@ sim
 	*=	*+55
 sysdef
 	.end
+Ende 	
