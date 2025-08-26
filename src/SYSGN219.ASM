@@ -60,15 +60,7 @@
 ;	page zero 0 & 1 not used (see also pzstrt use)
 ;	allow _ in file names
 ;base addresses and definitions
-pzstrt	=	$2		;start of page zero "free" RAM
-btejmp	=	$100		;warm boot jump
-pemjmp	=	$103		;jump to pem
-iostat	=	$106		;i/o status
-dflfcb	=	$107		;default fcb
-dflbuf	=	$128		;default buffer
-tea	=	$200		;tea start
-ccmlng	=	2048		;ccm length
-pemlng	=	3072		;pem length
+	.INCLUDE "../constants.asm"
 paglim	=	((ccm+ccmlng+pemlng)/256)+1	;allow one page for sim
 ;zero page for setup
 	*=	pzstrt
