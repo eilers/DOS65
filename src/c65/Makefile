@@ -6,7 +6,7 @@ BSA= ../../bsa/bsa
 all: $(BSA) c65loader.prg c65boot.bin c65sim.bin sysgen.bin
 
 clean:
-	rm -f *.bin *.lst *.sym *.prg *_map.png *_map.txt
+	rm -f *.bin *.lst *.sym *.prg *_map.png *_map.txt *.com ../*.lst
 	$(MAKE) -C ../../bsa clean
 
 $(BSA): ../../bsa/bsa.c
