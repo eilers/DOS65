@@ -6,7 +6,6 @@
 ;miscellaneous definitions
 .CPU  45GS02 
 Start_Run = $2001	; Memory location of the start program.
-Start_Sys = $E000	; Memory location of the os (ccm,pem,sys)
 
 CR	=	$0D	;carriage return
 ;C64 KERNAL entry points
@@ -22,6 +21,7 @@ CLALL	=	$FFE7	;close all files & channels
 CHROUT	=	$FFD2	;Char Out
 
 	.INCLUDE "../constants.asm"
+simlng	=	pages*256	;sim length in bytes
 
 ; ZP Adresses for Print
 LTXTSTRT	=	$FB
@@ -170,8 +170,8 @@ End_Run
 ;-------------------------
 ; Dos/65 System
 ;-------------------------
-
-	*=	Start_Sys
+	Start_Sys = memlng-simlng-pemlng-ccmlng#
+	*= Start_Sys
 	.STORE Start_Sys,End_Sys-Start_Sys,"dos65.bin"
 
 ;-------------------------------

@@ -35,9 +35,10 @@
 ;		added quote mode control to conout
 ;	9 april 2008
 ;		added blank dcb table entries for drives 2-7 (c-h)
+
+; Shared constants
+	.INCLUDE "../constants.asm"
 ;base addresses
-msize	=	64		;memory size in 1k blocks
-pages	=	10		;pages in sim
 wbtjmp	=	$100		;warm boot entry
 pemjmp	=	$103		;pem entry
 iostat	=	$106		;io status byte
@@ -62,14 +63,11 @@ wrall	=	0		;write to allocated
 wrdir	=	1		;write to directory
 wrual	=	2		;write to unallocated
 ;module addresses
-memlng	=	msize*1024	;memory length in bytes
 simlng	=	pages*256	;sim length in bytes
 pem	=	memlng-simlng-pemlng	;pem start
 ccm	=	pem-ccmlng	;ccm start
 length	=	ccmlng+pemlng	;length less sim
 nsects	=	length/128	;number sectors
-
-	.INCLUDE "../constants.asm"
 
 ;main program
 StartSim =	memlng-simlng
