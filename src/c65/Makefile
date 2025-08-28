@@ -3,7 +3,7 @@ BSA= ../../bsa/bsa
 
 .PONY: all
 
-all: $(BSA) c65loader.prg c65boot.bin c65sim.bin sysgen.bin
+all: $(BSA) c65sim.bin sysgen.bin c65loader.prg c65boot.bin c65run.prg 
 
 clean:
 	rm -f *.bin *.lst *.sym *.prg *_map.png *_map.txt *.com ../*.lst
@@ -12,15 +12,20 @@ clean:
 $(BSA): ../../bsa/bsa.c
 	$(MAKE) -C ../../bsa
 
-
-c65loader.prg: c65loader.asm
-	$(BSA) c65loader.asm
+pem.bin: ../pem.asm
+	$(BSA) ../pem.asm
 
 c65boot.bin: c65boot.asm
 	$(BSA) c65boot.asm
 
-c65sim.bin: c65sim.asm
+c65sim.bin: c65sim.asm 
 	$(BSA) -i c65sim.asm
 
-sysgen.bin: ../SYSGN219.asm
+sysgen.bin: ../SYSGN219.asm ../pem.asm ../ccm.asm ../constants.asm
 	$(BSA) ../SYSGN219.asm
+
+c65loader.prg: c65loader.asm
+	$(BSA) c65loader.asm
+
+c65run.prg: c65run.asm
+	$(BSA) c65run.asm

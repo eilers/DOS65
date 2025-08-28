@@ -5,5 +5,21 @@ iostat	=	$106		;i/o status
 dflfcb	=	$107		;default fcb
 dflbuf	=	$128		;default buffer
 tea	=	$200		;tea start
-ccmlng	=	2048		;ccm length
-pemlng	=	3072		;pem length
+ccmlng	=	2037		;ccm length
+pemlng	=	3047		;pem length
+
+;fixed parameters
+lf	=	$a		;linefeeed
+cr	=	$d		;return
+eof	=	$1a		;end of file
+null	=	0		;null
+ctlc	=	3		;abort
+ctle	=	5		;physical cr lf
+ctli	=	9		;tab character
+ctlp	=	$10		;toggle printer
+ctlr	=	$12		;repeat line
+ctls	=	$13		;freeze
+ctlx	=	$18		;cancel
+semico	=	$3b		;semicolon
+delete	=	$7f		;delete character
+numcmd	=	36		;number commands

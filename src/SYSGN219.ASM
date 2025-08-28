@@ -121,21 +121,6 @@ stksav				;save stack register
 frstsc				;first sector number of disk
 	*=	*+1
 lastzp
-;fixed parameters
-lf	=	$a		;linefeeed
-cr	=	$d		;return
-eof	=	$1a		;end of file
-null	=	0		;null
-ctlc	=	3		;abort
-ctle	=	5		;physical cr lf
-ctli	=	9		;tab character
-ctlp	=	$10		;toggle printer
-ctlr	=	$12		;repeat line
-ctls	=	$13		;freeze
-ctlx	=	$18		;cancel
-semico	=	$3b		;semicolon
-delete	=	$7f		;delete character
-numcmd	=	36		;number commands
 
 	.STORE Start,Ende-Start,"sysgn219.com"
 Start	=	tea

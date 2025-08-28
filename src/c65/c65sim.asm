@@ -36,7 +36,7 @@
 ;	9 april 2008
 ;		added blank dcb table entries for drives 2-7 (c-h)
 ;base addresses
-msize	=	52		;memory size in 1k blocks
+msize	=	64		;memory size in 1k blocks
 pages	=	10		;pages in sim
 wbtjmp	=	$100		;warm boot entry
 pemjmp	=	$103		;pem entry
@@ -64,15 +64,13 @@ wrual	=	2		;write to unallocated
 ;module addresses
 memlng	=	msize*1024	;memory length in bytes
 simlng	=	pages*256	;sim length in bytes
-pemlng	=	3072		;pem length in bytes
-ccmlng	=	2048		;ccm length in bytes
 pem	=	memlng-simlng-pemlng	;pem start
 ccm	=	pem-ccmlng	;ccm start
 length	=	ccmlng+pemlng	;length less sim
 nsects	=	length/128	;number sectors
-;fixed parameters
-cr	=	$d		;carriage return
-lf	=	$a		;linefeed
+
+	.INCLUDE "../constants.asm"
+
 ;main program
 StartSim =	memlng-simlng
 	*=	StartSim	;start of sim
@@ -113,7 +111,7 @@ wboote	jmp	wboot		;from warm boot
 ;	clear to eol is a lf as recommended by SIG
 ;	clear to eos is not implemented
 	.byte	0		;scratch
-	.byte	8		;backspace
+sysdef	.byte	8		;backspace
 	.byte	10		;clear to end of line
 	.byte	29		;forward space
 	.byte	1		;normal video
