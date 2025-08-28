@@ -74,9 +74,9 @@ nsects	=	length/128	;number sectors
 cr	=	$d		;carriage return
 lf	=	$a		;linefeed
 ;main program
-Start	=	memlng-simlng
-	*=	Start	;start of sim
-	.STORE Start,Ende-Start,"c65sim.bin"
+StartSim =	memlng-simlng
+	*=	StartSim	;start of sim
+	.STORE StartSim,EndSim-StartSim,"c65sim.bin"
 ;jump vector used by pem
 sim	jmp	boot		;from cold start
 wboote	jmp	wboot		;from warm boot
@@ -188,7 +188,7 @@ wboot	ldx	#$ff		;set stack
 	cld			;set binary mode
 ;set up parameters for warm boot
 	lda	#nsects		;get number sectors
-	sta	count		;and set count
+	sta	count_		;and set count
 	lda	#0		;set zero
 	sta	wbtrk		;clear track
 	jsr	seldsk		;and select drive zero
@@ -212,7 +212,7 @@ rdblk	lda	wbtrk		;get track
 	and	#$ff		;test for error
 	bne	rderr		;if error handle it
 ;first see if more
-	dec	count		;drop record count
+	dec	count_		;drop record count
 	beq	aldon		;done if zero
 ;adjust parameters for next record
 ;first do dma address
@@ -512,7 +512,7 @@ read	ldx	#0		;x <-- 0
 	stx	readop		;say is read operation
 	stx	rsflag		;must read data
 	inx			;x <-- wrual
-	stx	wrtype		;treat as unalloc
+	stx	wrtype_		;treat as unalloc
 	jmp	rwoper		;to perform the read
 ;The write entry point takes the place of
 ;the previous sim defintion for write.
@@ -520,14 +520,14 @@ read	ldx	#0		;x <-- 0
 ;input: a=0 if write to allocated block
 ;	=1 if write to directory
 ;	=2 if write to unallocated block
-write	sta	wrtype		;save param from pem
+write	sta	wrtype_		;save param from pem
 	jsr	tstdbl		;see if one rec/sec
 	bne	usewrt		;if not use type passed
 	lda	#wrdir		;if is say directory
-	sta	wrtype		;to force write
+	sta	wrtype_		;to force write
 usewrt	ldx	#0		;say is
 	stx	readop		;not a read operation
-	lda	wrtype		;get write type back
+	lda	wrtype_		;get write type back
 	cmp	#wrual		;write unallocated?
 	bne	chkuna		;check for unalloc
 ;write to unallocated, set parameters
@@ -742,7 +742,7 @@ rmoved	sta	$ffff,y
 	dey
 	bpl	rmove		;loop if more
 ;data has been moved to/from host buffer
-endmve	lda	wrtype		;write type
+endmve	lda	wrtype_		;write type
 	cmp	#wrdir		;to directory?
 	bne	nodir		;done if not
 ;clear host buffer for directory write
@@ -984,7 +984,7 @@ kychar				;keyboard character
 	*=	*+1
 savsec				;save sector for warm boot
 	*=	*+1
-count				;counter in warm boot
+count_				;counter in warm boot
 	*=	*+1
 temp				;save hstdsk for warm boot
 	*=	*+1
@@ -1016,7 +1016,7 @@ rsflag				;read sector flag
 	*=	*+1
 readop				;1 if read operation
 	*=	*+1
-wrtype				;write operation type
+wrtype_				;write operation type
 	*=	*+1
 d65spt				;dos/65 records/track
 	*=	*+2
@@ -1046,4 +1046,4 @@ ckmpb
 hstbuf
 	*=	*+256		;256 byte sectors
 	.end	
-Ende 	
+EndSim 	
