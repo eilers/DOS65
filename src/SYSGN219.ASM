@@ -1,4 +1,4 @@
--;sysgen
+;sysgen
 ;version 2.19-S
 ;released:	30 november 1985 (2.10)
 ;last revised:
