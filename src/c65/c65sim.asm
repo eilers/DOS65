@@ -184,7 +184,7 @@ wboot	ldx	#$ff		;set stack
 	cld			;set binary mode
 ;set up parameters for warm boot
 	lda	#nsects		;get number sectors
-	sta	count_		;and set count
+	sta	count		;and set count
 	lda	#0		;set zero
 	sta	wbtrk		;clear track
 	jsr	seldsk		;and select drive zero
@@ -208,7 +208,7 @@ rdblk	lda	wbtrk		;get track
 	and	#$ff		;test for error
 	bne	rderr		;if error handle it
 ;first see if more
-	dec	count_		;drop record count
+	dec	count		;drop record count
 	beq	aldon		;done if zero
 ;adjust parameters for next record
 ;first do dma address
@@ -980,7 +980,7 @@ kychar				;keyboard character
 	*=	*+1
 savsec				;save sector for warm boot
 	*=	*+1
-count_				;counter in warm boot
+count				;counter in warm boot
 	*=	*+1
 temp				;save hstdsk for warm boot
 	*=	*+1
