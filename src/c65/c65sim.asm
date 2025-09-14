@@ -36,8 +36,12 @@
 ;	9 april 2008
 ;		added blank dcb table entries for drives 2-7 (c-h)
 
-; Shared constants
+.CPU  45GS02 
+
+; Shared constants and macros
 	.INCLUDE "../constants.asm"
+	.INCLUDE "kernel.asm"
+	.INCLUDE "macros.asm"
 ;base addresses
 wbtjmp	=	$100		;warm boot entry
 pemjmp	=	$103		;pem entry
@@ -47,17 +51,6 @@ dflbuf	=	$128		;default buffer
 flash	=	$cc		;enable cursor flas if 0
 cursor	=	$cf		;cursor chaaracter (BLNON in PRG)
 qtsw	=	$d4		;quote mode 0=no
-SETLFS	=	$FFBA		;set LA, FA, SA
-SETNAM	=	$FFBD		;set length & file name address
-OPEN	=	$FFC0		;open logical file
-CLOSE	=	$FFC3		;close logical file
-CHKIN	=	$FFC6		;set channel in
-CKOUT	=	$FFC9		;set channel out
-CLRCH	=	$FFCC		;restore default channel
-BASIN	=	$FFCF		;input from channel
-BSOUT	=	$FFD2		;output to channel
-GETIN	=	$FFE4		;get a character (normally keyboard)
-CLALL	=	$FFE7		;close all files & channels
 ;pem constants on entry to write
 wrall	=	0		;write to allocated
 wrdir	=	1		;write to directory
@@ -1041,5 +1034,32 @@ ckmpb
 ;deblocking buffer for dba
 hstbuf
 	*=	*+256		;256 byte sectors
+
+; Code to switch to Kernel
+
+_SETLFS_S
+; 	Preserve A, X, Y
+	PHA
+	PHX
+	PHY
+; 	Enable Interface area
+	SetBank5WithInterface()
+	JSR _SETLFS
+	SetBank5Only()
+	RTS
+
+_SETNAM_S
+TODO
+
+; --------------------------------------
+; Mapping of Mega65 Kernel calls:
+; 1. Enable Interface bank ($2000-$3FFF)
+; 2. 
+; --------------------------------------
+	*= SETLFS
+	JMP _SETLFS_S
+	*= SETNAM
+	JMP _SETNAM_S
+
 	.end	
 EndSim 	

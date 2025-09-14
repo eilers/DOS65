@@ -8,17 +8,9 @@ Start = $2001
 .CPU  45GS02 
 
 CR	=	$0D	;carriage return
+
 ;C64 KERNAL entry points
-SETLFS	=	$FFBA	;set LA, FA, SA
-SETNAM	=	$FFBD	;set length & file name address
-OPEN	=	$FFC0	;open logical file
-CHKIN	=	$FFC6	;set channel in
-CKOUT	=	$FFC9	;set channel out
-CLRCH	=	$FFCC	;restore default channel
-BASIN	=	$FFCF	;input from channel
-BSOUT	=	$FFD2	;output to channel
-CLALL	=	$FFE7	;close all files & channels
-CHROUT	=	$FFD2	;Char Out
+	.INCLUDE "kernel.asm"
 
 ; ZP Adresses
 LTXTSTRT	=	$FB
@@ -43,29 +35,7 @@ MACRO break()
 	BRK
 ENDMAC
 
-MACRO EnableInterfaceRom()
-;	Use $D030 to map-in interface rom 
-;	by writing into $D030 
- 	LDA	#%00100000
- 	STA	$D030
-ENDMAC
-
-MACRO DisableInterfaceRom()
-;	Use $D030 to map-out all roms 
-;	by writing into $D030 
- 	LDA	#%00000000
- 	STA	$D030
-ENDMAC
-
-MACRO SetKernalOnly()
-	; Use MAP command to map in kernel only ($E000-EFFF)
-		LDA #%00000000
-		LDX #%00000000
-		LDY #%00000000
-		LDZ #%10000011
-		MAP
-		NOP
-ENDMAC
+	.INCLUDE "macros.asm"
 
 
 ;start of actual load

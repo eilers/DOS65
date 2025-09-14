@@ -15,16 +15,16 @@ $(BSA): ../../bsa/bsa.c
 pem.bin: ../pem.asm
 	$(BSA) ../pem.asm
 
-c65boot.bin: c65boot.asm ../pem.asm ../ccm.asm ../constants.asm
+c65boot.bin: c65boot.asm
 	$(BSA) c65boot.asm
 
-c65sim.bin: c65sim.asm 
+c65sim.bin: c65sim.asm  macros.asm
 	$(BSA) -i c65sim.asm
 
 sysgn219.com: ../SYSGN219.asm ../pem.asm ../ccm.asm ../constants.asm
 	$(BSA) ../SYSGN219.asm
 
-c65loader.prg: c65loader.asm
+c65loader.prg: c65loader.asm  ../pem.asm ../ccm.asm ../constants.asm macros.asm
 	$(BSA) c65loader.asm
 
 c65run.prg: c65run.asm

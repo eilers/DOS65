@@ -8,19 +8,11 @@
 Start_Run = $2001	; Memory location of the start program.
 
 CR	=	$0D	;carriage return
-;C64 KERNAL entry points
-SETLFS	=	$FFBA	;set LA, FA, SA
-SETNAM	=	$FFBD	;set length & file name address
-OPEN	=	$FFC0	;open logical file
-CHKIN	=	$FFC6	;set channel in
-CKOUT	=	$FFC9	;set channel out
-CLRCH	=	$FFCC	;restore default channel
-BASIN	=	$FFCF	;input from channel
-BSOUT	=	$FFD2	;output to channel
-CLALL	=	$FFE7	;close all files & channels
-CHROUT	=	$FFD2	;Char Out
 
 	.INCLUDE "../constants.asm"
+	.INCLUDE "kernel.asm"
+	.INCLUDE "macros.asm"
+
 simlng	=	pages*256	;sim length in bytes
 
 ; ZP Adresses for Print
@@ -45,31 +37,6 @@ MACRO break()
 	JSR CLRCH
 	BRK
 ENDMAC
-
-MACRO EnableInterfaceRom()
-;	Use $D030 to map-in interface rom 
-;	by writing into $D030 
- 	LDA	#%00100000
- 	STA	$D030
-ENDMAC
-
-MACRO DisableInterfaceRom()
-;	Use $D030 to map-out all roms 
-;	by writing into $D030 
- 	LDA	#%00000000
- 	STA	$D030
-ENDMAC
-
-MACRO SetKernalOnly()
-	; Use MAP command to map in kernel only ($E000-EFFF)
-		LDA #%00000000
-		LDX #%00000000
-		LDY #%00000000
-		LDZ #%10000011
-		MAP
-		NOP
-ENDMAC
-
 
 ;start of actual load
 	*=	Start_Run		
@@ -139,7 +106,7 @@ PrintHexByte:
 	PLA                ; Restore A
 	AND #$0F           ; Mask low nibble
 	JSR nybble_to_ascii
-	JSR CHROUT          ; Print low nibble
+	JSR CHROUT	; Print low nibble
 	RTS
 
 ;-------------------------
@@ -150,7 +117,7 @@ PrintHexByte:
 nybble_to_ascii:
 	CMP #$0A
 	BCC nba_num
-	ADC #$06           ; Add 6 to go from '9'+1 to 'A'
+	ADC #$06	; Add 6 to go from '9'+1 to 'A'
 nba_num	CLC
 	ADC #$30
 	RTS
@@ -159,12 +126,71 @@ nba_num	CLC
 text:   .text "VALUE: "
 	.byte 0
 
-value:  .byte $3A          ; Value to display (change to test)	
+value:  .byte $3A	; Value to display (change to test)	
 	
 ;data area
 INITTXT	.byte	"DOS/65 - RUNNER FOR MEGA65",CR,"PLEASE WAIT ...",CR,0
 NLTXT   .byte	CR,0
 
+; Entry Point for SIM to access into the kernel
+; This is called with Bank 5 pulled in. Only $2000 - $3FFF is
+; from Bank 0
+_SETLFS
+; 	Save SP (High and Low)
+	TSY
+	STY	SAV_SPH
+	TSX
+	STX	SAV_SPL
+	JSR 	PREP_KRN_CALL
+	JSR	SETLFS		; No return values!	
+	JSR	REC_KRN_CALL
+; 	Recover SP before return 
+	LDY	SAV_SPH		; Recover Stack Pointer High
+	TYS
+	LDX	SAV_SPL		; Recover Stack Pointer Low
+	TXS
+	RTS
+_SETNAM
+; 	Save SP (High and Low)
+	TSY
+	STY	SAV_SPH
+	TSX
+	STX	SAV_SPL
+	JSR 	PREP_KRN_CALL
+	JSR	SETNAM		; No return values!	
+	JSR	REC_KRN_CALL
+; 	Recover SP before return 
+	LDY	SAV_SPH		; Recover Stack Pointer High
+	TYS
+	LDX	SAV_SPL		; Recover Stack Pointer Low
+	TXS
+	RTS
+
+; Prepare for Kernel call
+PREP_KRN_CALL
+; 	Recover A, X, Y and copy to transfer area.
+	PLY 
+	STY 	SAV_Y
+	PLX
+	STX 	SAV_X
+	PLA
+	STA 	SAV_A
+; 	Switch to Kernel, recover regs and jump into.
+	SetKernalOnly()
+	LDA	SAV_A
+	LDX	SAV_X
+	LDY	SAV_Y
+	RTS
+; Recover from Kernel call
+REC_KRN_CALL
+	SetBank5WithInterface()	
+	RTS
+
+SAV_A	.byte 0
+SAV_X	.byte 0
+SAV_Y	.byte 0
+SAV_SPH .byte 0
+SAV_SPL	.byte 0
 End_Run 	
 
 ;-------------------------
