@@ -14,4 +14,4 @@ CHROUT	=	$FFD2	        ;Char Out
 
 
 ; Entrypoints SIM -> Transfer -> Kernel
-_SETLFS =       $20a8
+_SETLFS =       $20cd
