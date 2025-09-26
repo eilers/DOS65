@@ -8,10 +8,17 @@ CKOUT	=	$FFC9		;set channel out
 CLRCH	=	$FFCC		;restore default channel
 BASIN	=	$FFCF		;input from channel
 BSOUT	=	$FFD2		;output to channel
+CHROUT	=	$FFD2	        ;Char Out .. same as BSOUT
 GETIN	=	$FFE4		;get a character (normally keyboard)
 CLALL	=	$FFE7		;close all files & channels
-CHROUT	=	$FFD2	        ;Char Out
-
+SETBNK  =       $FF6B           ;set bank
 
 ; Entrypoints SIM -> Transfer -> Kernel
-_SETLFS =       $20cd
+_SETLFS                 = $20ec
+_BSOUT                  = $2165
+_SETNAM                 = $2122
+
+; Interface copy buffer
+COPY_BUFFER             = $219d
+
+_INIT_AFTER_LOAD        = $fe5a ; Cold boot enry after initial load

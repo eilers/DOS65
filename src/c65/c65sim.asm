@@ -1047,7 +1047,8 @@ _SETLFS_S
 _SETNAM_S
 ; 	Enable Interface area
 	SetBank5WithInterface()
-	JSR _SETNAM ; TODO: Copy name to interface!!
+	JSR	COPY_TO_COPY_BUFFER
+	JSR 	_SETNAM
 	SetBank5Only()
 	RTS
 
@@ -1068,6 +1069,35 @@ _INIT_AFTER_LOAD
 	LDY	#$00	; Init stack ponter (high)
 	TYS
 	JMP	sim	; start cold boot..
+
+; Fast copy bytes into copy buffer.
+; A: Length
+; X: SRC Address Low
+; Y; SRC Address High
+COPY_TO_COPY_BUFFER
+	STA	CPYLEN
+	STX	CPYSRL
+	STY	CPYSRH
+	PHA
+	LDA	#$05		; DMA list exists in Bank 0
+	STA	$D702
+	LDA	#>CPY_DMA
+	STA	$D701
+	LDA	#<CPY_DMA
+	STA	$D700		; Execute copy via DMS
+	PLA
+	RTS
+CPY_DMA
+	.byte	$00			; Command low byte: COPY
+CPYLEN	.word	0 			; How many bytes
+CPYSRL	.byte   0			; From address Low
+CPYSRH	.byte 	0			; From address High
+	.byte	$05			; Source Bank
+	.word	COPY_BUFFER 		; Destination address
+	.byte   $00			; Destination Bank
+	.byte	$00			; Command high byte
+	.word   $0000			; Modulo (ignored for COPY)
+
 
 
 ; --------------------------------------

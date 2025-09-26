@@ -173,13 +173,14 @@ _SETLFS
 _SETNAM
 	SetKernalOnly()
 	; SETBNK is required! Use Bank 0 here..
-	PHA
-	PHX
+	PHA	; Save length
 	LDA	#$00
 	LDX	#$00
 	JSR	SETBNK
-	PLX
+	; Filename was stored in COPY_BUFFER. Length is in A
 	PLA
+	LDY	<COPY_BUFFER
+	LDY	>COPY_BUFFER
 	JSR	SETNAM		; IN: A, X, Y; OUT: None	
 	SetBank5WithInterface()	
 	RTS
@@ -192,6 +193,8 @@ _BSOUT
 
 K_SPH	.byte	0	; Kernel: Stack pointer high
 K_SPL	.byte	0	; Kernel: Stack pointer low
+COPY_BUFFER
+	*= 	*+80
 End_Run 	
 
 ;-------------------------
