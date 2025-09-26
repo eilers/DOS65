@@ -12,8 +12,27 @@ MACRO DisableInterfaceRom()
  	TRB	$D030
 ENDMAC
 
+MACRO SaveRegisters()
+; 	Preserve A, X, Y, cpu flags
+	PHA
+	PHX
+	PHY
+	PHZ
+	PHP
+ENDMAC
+
+MACRO RecoverRegisters()
+; 	Recover A, X, Y, cpu flags
+	PLP
+	PLZ
+	PLY
+	PLX
+	PLA
+ENDMAC
+
 ; Used to Access the Kernel functions
 MACRO SetKernalOnly()
+	SaveRegisters()
 ;	Use $D030.5 to map-in the Interface ROM
  	LDA	#%00100000      ; Enable 2.C000
  	TSB	$D030
@@ -26,24 +45,29 @@ MACRO SetKernalOnly()
 	LDZ #%10000011
 	MAP
 	NOP
+	RecoverRegisters()
 ENDMAC
 
 ; Use Bank 5 complete (64k)
 MACRO SetBank5Only()
+	SaveRegisters()
 	LDA #%00000000
 	LDX #%11110101
 	LDY #%00000000
 	LDZ #%11110101
 	MAP
 	NOP
+	RecoverRegisters()
 ENDMAC
 
 ; Use Bank 5 complete (64k)
 MACRO SetBank5WithInterface()
+	SaveRegisters()
 	LDA #%00000000
 	LDX #%11010101  ; Access $2000 - $3FFF
 	LDY #%00000000
 	LDZ #%11110101
 	MAP
 	NOP
+	RecoverRegisters()
 ENDMAC

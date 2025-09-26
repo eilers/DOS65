@@ -1038,10 +1038,6 @@ hstbuf
 ; Code to switch to Kernel
 
 _SETLFS_S
-; 	Preserve A, X, Y
-	PHA
-	PHX
-	PHY
 ; 	Enable Interface area
 	SetBank5WithInterface()
 	JSR _SETLFS
@@ -1049,7 +1045,30 @@ _SETLFS_S
 	RTS
 
 _SETNAM_S
-TODO
+; 	Enable Interface area
+	SetBank5WithInterface()
+	JSR _SETNAM ; TODO: Copy name to interface!!
+	SetBank5Only()
+	RTS
+
+_BSOUT_S
+; 	Enable Interface area
+	SetBank5WithInterface()
+	JSR _BSOUT
+	SetBank5Only()
+	RTS
+
+
+; This is called from the c65run after copying
+; the ccm + pem + sim to its final memory location.
+_INIT_AFTER_LOAD
+	SetBank5Only()
+	LDX	#$FF	; Init stack pointer (low)	
+	TXS
+	LDY	#$00	; Init stack ponter (high)
+	TYS
+	JMP	sim	; start cold boot..
+
 
 ; --------------------------------------
 ; Mapping of Mega65 Kernel calls:
@@ -1057,9 +1076,11 @@ TODO
 ; 2. 
 ; --------------------------------------
 	*= SETLFS
-	JMP _SETLFS_S
+	JMP	_SETLFS_S
 	*= SETNAM
-	JMP _SETNAM_S
+	JMP	_SETNAM_S
+	*= BSOUT
+	JMP	_BSOUT_S
 
 	.end	
 EndSim 	
