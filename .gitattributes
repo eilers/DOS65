@@ -1,0 +1,2 @@
+*.asm   diff
+src/c65/*.asm
