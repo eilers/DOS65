@@ -79,6 +79,7 @@ basend:	.byte 0,0 	; end of basic
 	SetBank5WithInterface()
 ; Jump indirectly to the cold boot routine
 	; First save current stack pointer
+	; TODO: Check whether necessary.. 
 	TSY			; Load stack pointer high
 	STY	K_SPH
 	TSX			; Load stack pointer low
@@ -168,8 +169,7 @@ NLTXT   .byte	CR,0
 _SETLFS
 	SetKernalOnly()
 	JSR	SETLFS		; IN: A, X, Y; OUT: None	
-	SetBank5WithInterface()	
-	RTS
+	JMP	_RETURN
 _SETNAM
 	SetKernalOnly()
 	; SETBNK is required! Use Bank 0 here..
@@ -179,15 +179,47 @@ _SETNAM
 	JSR	SETBNK
 	; Filename was stored in COPY_BUFFER. Length is in A
 	PLA
-	LDY	<COPY_BUFFER
+	LDX	<COPY_BUFFER
 	LDY	>COPY_BUFFER
 	JSR	SETNAM		; IN: A, X, Y; OUT: None	
-	SetBank5WithInterface()	
-	RTS
-
-_BSOUT
+	JMP	_RETURN
+_OPEN	; TODO: Ensure that C stays alive..
+	SetKernalOnly()
+	JSR	OPEN		; IN: -; OUT: A, C
+	JMP	_RETURN
+_CLOSE
+	SetKernalOnly()
+	JSR	CLOSE		; IN: A, C; OUT: A, C
+	JMP	_RETURN
+_CHKIN
+	SetKernalOnly()
+	JSR	CHKIN		; IN: X; OUT: A, C
+	JMP	_RETURN
+_CKOUT
+	SetKernalOnly()
+	JSR	CKOUT		; IN: X; OUT: A, C
+	JMP	_RETURN
+_CLRCH
+	SetKernalOnly()
+	JSR	CLRCH		; IN: -; OUT: -
+	JMP	_RETURN
+_BASIN
+	SetKernalOnly()
+	JSR	BASIN		; IN: -; OUT: A, C
+	JMP	_RETURN
+_BSOUT	; TODO: Ensure that C stays alive..
 	SetKernalOnly()
 	JSR	BSOUT		; IN: A; OUT: A, C	
+	JMP	_RETURN
+_GETIN
+	SetKernalOnly()
+	JSR	GETIN		; IN: -; OUT: A, C
+	JMP	_RETURN
+_CLALL
+	SetKernalOnly()
+	JSR	CLALL		; IN: -; OUT: -
+	JMP	_RETURN
+_RETURN
 	SetBank5WithInterface()	
 	RTS
 

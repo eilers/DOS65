@@ -1040,25 +1040,63 @@ hstbuf
 _SETLFS_S
 ; 	Enable Interface area
 	SetBank5WithInterface()
-	JSR _SETLFS
-	SetBank5Only()
-	RTS
-
+	JSR	_SETLFS
+	JMP	_RETURN_S
 _SETNAM_S
 ; 	Enable Interface area
 	SetBank5WithInterface()
 	JSR	COPY_TO_COPY_BUFFER
 	JSR 	_SETNAM
-	SetBank5Only()
-	RTS
+	JMP	_RETURN_S
 
+_OPEN_S
+; 	Enable Interface area
+	SetBank5WithInterface()
+	JSR	_OPEN
+	JMP	_RETURN_S
+_CLOSE_S
+; 	Enable Interface area
+	SetBank5WithInterface()
+	JSR	_CLOSE
+	JMP	_RETURN_S
+_CHKIN_S
+; 	Enable Interface area
+	SetBank5WithInterface()
+	JSR	_CHKIN
+	JMP	_RETURN_S
+_CKOUT_S
+; 	Enable Interface area
+	SetBank5WithInterface()
+	JSR	_CHKOUT
+	JMP	_RETURN_S
+_CLRCH_S
+; 	Enable Interface area
+	SetBank5WithInterface()
+	JSR	_CLRCH
+	JMP	_RETURN_S
+_BASIN_S
+; 	Enable Interface area
+	SetBank5WithInterface()
+	JSR	_BASIN
+	JMP	_RETURN_S
 _BSOUT_S
 ; 	Enable Interface area
 	SetBank5WithInterface()
-	JSR _BSOUT
+	JSR	_BSOUT
+	JMP	_RETURN_S
+_GETIN_S
+; 	Enable Interface area
+	SetBank5WithInterface()
+	JSR	_GETIN
+	JMP	_RETURN_S
+_CLALL_S
+; 	Enable Interface area
+	SetBank5WithInterface()
+	JSR	_CLALL
+	JMP	_RETURN_S
+_RETURN_S
 	SetBank5Only()
 	RTS
-
 
 ; This is called from the c65run after copying
 ; the ccm + pem + sim to its final memory location.
@@ -1075,7 +1113,7 @@ _INIT_AFTER_LOAD
 ; X: SRC Address Low
 ; Y; SRC Address High
 COPY_TO_COPY_BUFFER
-	STA	CPYLEN
+	STA	CPYLEN		; Only low byte required
 	STX	CPYSRL
 	STY	CPYSRH
 	PHA
@@ -1109,8 +1147,21 @@ CPYSRH	.byte 	0			; From address High
 	JMP	_SETLFS_S
 	*= SETNAM
 	JMP	_SETNAM_S
+	*= OPEN
+	JMP	_OPEN_S
+	*= CLOSE
+	JMP	_CLOSE_S
+	*= CHKIN
+	JMP	_CHKIN_S
+	*= CKOUT
+	JMP	_CKOUT_S
+	*= CLRCH
+	JMP	_CLRCH_S
 	*= BSOUT
 	JMP	_BSOUT_S
-
+	*= GETIN
+	JMP	_GETIN_S
+	*= CLALL
+	JMP	_CLALL_S
 	.end	
 EndSim 	
