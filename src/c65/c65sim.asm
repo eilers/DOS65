@@ -1136,8 +1136,6 @@ CPYSRH	.byte 	0			; From address High
 	.byte	$00			; Command high byte
 	.word   $0000			; Modulo (ignored for COPY)
 
-
-
 ; --------------------------------------
 ; Mapping of Mega65 Kernel calls:
 ; 1. Enable Interface bank ($2000-$3FFF)

@@ -1,13 +1,17 @@
 # BSA= ../../bsa/bsa_m2.x
 BSA= ../../bsa/bsa
 
-.PONY: all
+.PONY: all clean load
 
 all: $(BSA) c65sim.bin sysgn219.com c65loader.prg c65boot.bin c65run.prg 
 
 clean:
 	rm -f *.bin *.lst *.sym *.prg *_map.png *_map.txt *.com ../*.lst
 	$(MAKE) -C ../../bsa clean
+
+load:	all
+	/Applications/m65tools/m65.osx c65run.prg
+	/Applications/m65tools/m65dbg -l /dev/cu.usbserial-1101 
 
 $(BSA): ../../bsa/bsa.c
 	$(MAKE) -C ../../bsa
