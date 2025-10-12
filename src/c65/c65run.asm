@@ -234,7 +234,7 @@ End_Run
 ;-------------------------
 	Start_Sys = memlng-simlng-pemlng-ccmlng#
 	*= Start_Sys
-	.STORE Start_Sys,End_Sys-Start_Sys,"dos65.bin"
+	.STORE Start_Sys,pemlng+ccmlng,"dos65.bin"
 
 ;-------------------------------
 ; Include ccm + pem 
