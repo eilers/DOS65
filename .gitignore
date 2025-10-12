@@ -2,3 +2,5 @@
 *.prg
 *.com
 *.lst
+src/c65/.history.txt
+src/zrun/lib6502
