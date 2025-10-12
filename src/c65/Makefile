@@ -12,6 +12,10 @@ clean:
 load:	all
 	/Applications/m65tools/m65.osx c65run.prg
 	/Applications/m65tools/m65dbg -l /dev/cu.usbserial-1101 
+	
+xemu:	all
+	/Users/stefan/Developer/c65/xemu/build/bin/xmega65.native -prg ./c65run.prg -prgtest "print \"run\""  -uartmon :4510 &
+	/Applications/m65tools/m65dbg -l tcp
 
 $(BSA): ../../bsa/bsa.c
 	$(MAKE) -C ../../bsa
