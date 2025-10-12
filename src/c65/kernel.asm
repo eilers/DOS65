@@ -29,4 +29,4 @@ _CLALL			= $2261
 ; Interface copy buffer
 COPY_BUFFER             = $229c
 
-_INIT_AFTER_LOAD        = $ff09 ; Cold boot enry after initial load
+_INIT_AFTER_LOAD        = $ff0c ; Cold boot enry after initial load

@@ -1094,6 +1094,12 @@ _CLALL_S
 	SetBank5WithInterface()
 	JSR	_CLALL
 	JMP	_RETURN_S
+_NMI_S
+	RTI
+_RESET_S
+	RTI
+_IRQ_KERNEL_S
+	RTI
 _RETURN_S
 	SetBank5Only()
 	RTS
@@ -1162,4 +1168,9 @@ CPYSRH	.byte 	0			; From address High
 	*= CLALL
 	JMP	_CLALL_S
 	.end	
+
+	* = $fffa
+	.word _NMI_S	;processor hardware vectors
+	.word _RESET_S
+	.word _IRQ_KERNEL_S
 EndSim 	
