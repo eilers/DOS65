@@ -13,13 +13,14 @@ MACRO DisableInterfaceRom()
 ENDMAC
 
 ; Used to Access the Kernel functions
-MACRO SetKernalOnly()
+; This preserces A, X, Y and the cpu flags without
+; using the stack.
+MACRO SetKernalOnly(QADDR, PADDR)
 ; 	Preserve A, X, Y, cpu flags
-	PHA
-	PHX
-	PHY
-	PHZ
+	STQ	QADDR
 	PHP
+	PLA
+	STA	PADDR
 ;	End preserve
 ;	Use $D030.5 to map-in the Interface ROM
  	LDA	#%00100000      ; Enable 2.C000
@@ -34,11 +35,10 @@ MACRO SetKernalOnly()
 	MAP
 	NOP
 ; 	Recover A, X, Y, cpu flags
+	LDA	PADDR
+	PHA
 	PLP
-	PLZ
-	PLY
-	PLX
-	PLA
+	LDQ	QADDR
 ;	End Recover
 ENDMAC
 

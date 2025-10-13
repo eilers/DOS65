@@ -57,7 +57,7 @@ basend:	.byte 0,0 	; end of basic
 	SEI		;disable interrupts
 ;set up C65 memory by disabling BASIC ROM & Character ROM
 	EnableInterfaceRom()
-	SetKernalOnly()
+	SetKernalOnly(S_AXYZ, S_P)
 ;Print init text
 	PrintTxt(INITTXT)
 ;close everything - including whatever BASIC did or user did
@@ -167,11 +167,11 @@ NLTXT   .byte	CR,0
 ; from Bank 0
 ; TODO: Check that SP is unchanged after Kernel call!
 _SETLFS
-	SetKernalOnly()
+	SetKernalOnly(S_AXYZ, S_P)
 	JSR	SETLFS		; IN: A, X, Y; OUT: None	
 	JMP	_RETURN
 _SETNAM
-	SetKernalOnly()
+	SetKernalOnly(S_AXYZ, S_P)
 	; SETBNK is required! Use Bank 0 here..
 	PHA	; Save length
 	LDA	#$00
@@ -184,39 +184,39 @@ _SETNAM
 	JSR	SETNAM		; IN: A, X, Y; OUT: None	
 	JMP	_RETURN
 _OPEN	; TODO: Ensure that C stays alive..
-	SetKernalOnly()
+	SetKernalOnly(S_AXYZ, S_P)
 	JSR	OPEN		; IN: -; OUT: A, C
 	JMP	_RETURN
 _CLOSE
-	SetKernalOnly()
+	SetKernalOnly(S_AXYZ, S_P)
 	JSR	CLOSE		; IN: A, C; OUT: A, C
 	JMP	_RETURN
 _CHKIN
-	SetKernalOnly()
+	SetKernalOnly(S_AXYZ, S_P)
 	JSR	CHKIN		; IN: X; OUT: A, C
 	JMP	_RETURN
 _CKOUT
-	SetKernalOnly()
+	SetKernalOnly(S_AXYZ, S_P)
 	JSR	CKOUT		; IN: X; OUT: A, C
 	JMP	_RETURN
 _CLRCH
-	SetKernalOnly()
+	SetKernalOnly(S_AXYZ, S_P)
 	JSR	CLRCH		; IN: -; OUT: -
 	JMP	_RETURN
 _BASIN
-	SetKernalOnly()
+	SetKernalOnly(S_AXYZ, S_P)
 	JSR	BASIN		; IN: -; OUT: A, C
 	JMP	_RETURN
 _BSOUT	; TODO: Ensure that C stays alive..
-	SetKernalOnly()
+	SetKernalOnly(S_AXYZ, S_P)
 	JSR	BSOUT		; IN: A; OUT: A, C	
 	JMP	_RETURN
 _GETIN
-	SetKernalOnly()
+	SetKernalOnly(S_AXYZ, S_P)
 	JSR	GETIN		; IN: -; OUT: A, C
 	JMP	_RETURN
 _CLALL
-	SetKernalOnly()
+	SetKernalOnly(S_AXYZ, S_P)
 	JSR	CLALL		; IN: -; OUT: -
 	JMP	_RETURN
 _RETURN
@@ -225,6 +225,8 @@ _RETURN
 
 K_SPH	.byte	0	; Kernel: Stack pointer high
 K_SPL	.byte	0	; Kernel: Stack pointer low
+S_AXYZ	.byte	0,0,0,0	; Save A, X, Y, Z
+S_P	.byte	0	; Save Processor flags
 COPY_BUFFER
 	*= 	*+80
 End_Run 	

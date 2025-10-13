@@ -14,19 +14,19 @@ CLALL	=	$FFE7		;close all files & channels
 SETBNK  =       $FF6B           ;set bank
 
 ; Entrypoints SIM -> Transfer -> Kernel
-_SETLFS			= $20ec
-_SETNAM			= $2110
-_OPEN			= $2141
-_CLOSE			= $2165
-_CHKIN			= $2189
+_SETLFS			= $20f6
+_SETNAM			= $2124
+_OPEN			= $215f
+_CLOSE			= $218d
+_CHKIN			= $21bb
 _CHKOUT			= $21ad
-_CLRCH			= $21d1
-_BASIN			= $21f5
-_BSOUT                  = $2219
-_GETIN			= $223d
-_CLALL			= $2261
+_CLRCH			= $2217
+_BASIN			= $2245
+_BSOUT                  = $2273
+_GETIN			= $22a1
+_CLALL			= $22cf
 
 ; Interface copy buffer
-COPY_BUFFER             = $229c
+COPY_BUFFER             = $2319
 
 _INIT_AFTER_LOAD        = $ff0c ; Cold boot enry after initial load
