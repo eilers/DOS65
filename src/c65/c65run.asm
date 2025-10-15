@@ -76,7 +76,7 @@ basend:	.byte 0,0 	; end of basic
 	LDA	#<dmacopy
 	STA	$D700		; Execute copy via DMS
 ; Switch to Bank 5, but keep $2000 - $3FFF 
-	SetBank5WithInterface()
+	SetBank5WithInterface(S_AXYZ, S_P)
 ; Jump indirectly to the cold boot routine
 	; First save current stack pointer
 	; TODO: Check whether necessary.. 
@@ -220,7 +220,7 @@ _CLALL
 	JSR	CLALL		; IN: -; OUT: -
 	JMP	_RETURN
 _RETURN
-	SetBank5WithInterface()	
+	SetBank5WithInterface(S_AXYZ, S_P)	
 	RTS
 
 K_SPH	.byte	0	; Kernel: Stack pointer high
