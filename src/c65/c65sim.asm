@@ -1039,59 +1039,59 @@ hstbuf
 
 _SETLFS_S
 ; 	Enable Interface area
-	SetBank5WithInterface()
+	JSR	_SetBank5WithInterface
 	JSR	_SETLFS
 	JMP	_RETURN_S
 _SETNAM_S
 ; 	Enable Interface area
-	SetBank5WithInterface()
+	JSR	_SetBank5WithInterface
 	JSR	COPY_TO_COPY_BUFFER
 	JSR 	_SETNAM
 	JMP	_RETURN_S
 
 _OPEN_S
 ; 	Enable Interface area
-	SetBank5WithInterface()
+	JSR	_SetBank5WithInterface
 	JSR	_OPEN
 	JMP	_RETURN_S
 _CLOSE_S
 ; 	Enable Interface area
-	SetBank5WithInterface()
+	JSR	_SetBank5WithInterface
 	JSR	_CLOSE
 	JMP	_RETURN_S
 _CHKIN_S
 ; 	Enable Interface area
-	SetBank5WithInterface()
+	JSR	_SetBank5WithInterface
 	JSR	_CHKIN
 	JMP	_RETURN_S
 _CKOUT_S
 ; 	Enable Interface area
-	SetBank5WithInterface()
+	JSR	_SetBank5WithInterface
 	JSR	_CHKOUT
 	JMP	_RETURN_S
 _CLRCH_S
 ; 	Enable Interface area
-	SetBank5WithInterface()
+	JSR	_SetBank5WithInterface
 	JSR	_CLRCH
 	JMP	_RETURN_S
 _BASIN_S
 ; 	Enable Interface area
-	SetBank5WithInterface()
+	JSR	_SetBank5WithInterface
 	JSR	_BASIN
 	JMP	_RETURN_S
 _BSOUT_S
 ; 	Enable Interface area
-	SetBank5WithInterface()
+	JSR	_SetBank5WithInterface
 	JSR	_BSOUT
 	JMP	_RETURN_S
 _GETIN_S
 ; 	Enable Interface area
-	SetBank5WithInterface()
+	JSR	_SetBank5WithInterface
 	JSR	_GETIN
 	JMP	_RETURN_S
 _CLALL_S
 ; 	Enable Interface area
-	SetBank5WithInterface()
+	JSR	_SetBank5WithInterface
 	JSR	_CLALL
 	JMP	_RETURN_S
 _NMI_S
@@ -1100,14 +1100,19 @@ _RESET_S
 	RTI
 _IRQ_KERNEL_S
 	RTI
+
+_SetBank5WithInterface
+	SetBank5WithInterface(S_AXYZ, S_P)
+	RTS
+
 _RETURN_S
-	SetBank5Only()
+	SetBank5Only(S_AXYZ, S_P)
 	RTS
 
 ; This is called from the c65run after copying
 ; the ccm + pem + sim to its final memory location.
 _INIT_AFTER_LOAD
-	SetBank5Only()
+	SetBank5Only(S_AXYZ, S_P)
 	LDX	#$FF	; Init stack pointer (low)	
 	TXS
 	LDY	#$00	; Init stack ponter (high)
@@ -1141,6 +1146,9 @@ CPYSRH	.byte 	0			; From address High
 	.byte   $00			; Destination Bank
 	.byte	$00			; Command high byte
 	.word   $0000			; Modulo (ignored for COPY)
+
+S_AXYZ	.byte	0,0,0,0	; Save A, X, Y, Z
+S_P	.byte	0	; Save Processor flags
 
 ; --------------------------------------
 ; Mapping of Mega65 Kernel calls:

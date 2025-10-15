@@ -43,13 +43,12 @@ MACRO SetKernalOnly(QADDR, PADDR)
 ENDMAC
 
 ; Use Bank 5 complete (64k)
-MACRO SetBank5Only()
+MACRO SetBank5Only(QADDR, PADDR)
 ; 	Preserve A, X, Y, cpu flags
-	PHA
-	PHX
-	PHY
-	PHZ
+	STQ	QADDR
 	PHP
+	PLA
+	STA	PADDR
 ;	End preserve
 	LDA #%00000000
 	LDX #%11110101
@@ -58,22 +57,20 @@ MACRO SetBank5Only()
 	MAP
 	NOP
 ; 	Recover A, X, Y, cpu flags
+	LDA	PADDR
+	PHA
 	PLP
-	PLZ
-	PLY
-	PLX
-	PLA
+	LDQ	QADDR
 ;	End Recover
 ENDMAC
 
 ; Use Bank 5 complete (64k)
-MACRO SetBank5WithInterface()
+MACRO SetBank5WithInterface(QADDR, PADDR)
 ; 	Preserve A, X, Y, cpu flags
-	PHA
-	PHX
-	PHY
-	PHZ
+	STQ	QADDR
 	PHP
+	PLA
+	STA	PADDR
 ;	End preserve
 	LDA #%00000000
 	LDX #%11010101  ; Access $2000 - $3FFF
@@ -82,10 +79,9 @@ MACRO SetBank5WithInterface()
 	MAP
 	NOP
 ; 	Recover A, X, Y, cpu flags
+	LDA	PADDR
+	PHA
 	PLP
-	PLZ
-	PLY
-	PLX
-	PLA
+	LDQ	QADDR
 ;	End Recover
 ENDMAC
