@@ -17,8 +17,8 @@ ENDMAC
 ; using the stack.
 MACRO SetKernalOnly(QADDR, PADDR)
 ; 	Preserve A, X, Y, cpu flags
-	STQ	QADDR
 	PHP
+	STQ	QADDR
 	PLA
 	STA	PADDR
 ;	End preserve
@@ -37,16 +37,16 @@ MACRO SetKernalOnly(QADDR, PADDR)
 ; 	Recover A, X, Y, cpu flags
 	LDA	PADDR
 	PHA
-	PLP
 	LDQ	QADDR
+	PLP
 ;	End Recover
 ENDMAC
 
 ; Use Bank 5 complete (64k)
 MACRO SetBank5Only(QADDR, PADDR)
 ; 	Preserve A, X, Y, cpu flags
-	STQ	QADDR
 	PHP
+	STQ	QADDR
 	PLA
 	STA	PADDR
 ;	End preserve
@@ -59,16 +59,16 @@ MACRO SetBank5Only(QADDR, PADDR)
 ; 	Recover A, X, Y, cpu flags
 	LDA	PADDR
 	PHA
-	PLP
 	LDQ	QADDR
+	PLP
 ;	End Recover
 ENDMAC
 
 ; Use Bank 5 complete (64k)
 MACRO SetBank5WithInterface(QADDR, PADDR)
 ; 	Preserve A, X, Y, cpu flags
-	STQ	QADDR
 	PHP
+	STQ	QADDR
 	PLA
 	STA	PADDR
 ;	End preserve
@@ -81,7 +81,7 @@ MACRO SetBank5WithInterface(QADDR, PADDR)
 ; 	Recover A, X, Y, cpu flags
 	LDA	PADDR
 	PHA
-	PLP
 	LDQ	QADDR
+	PLP
 ;	End Recover
 ENDMAC
