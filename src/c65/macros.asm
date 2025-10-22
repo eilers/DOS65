@@ -1,8 +1,10 @@
 MACRO EnableInterfaceRom()
 ;	Use $D030 to map-in interface rom 
 ;	by writing into $D030 
- 	LDA	#%00100000
+ 	LDA	#%10100000
  	TSB	$D030
+	LDA     #%00011000      ; Disable ROME, ROMA, ROM8
+	TRB     $D030
 ENDMAC
 
 MACRO DisableInterfaceRom()
@@ -22,18 +24,13 @@ MACRO SetKernalOnly(QADDR, PADDR)
 	PLA
 	STA	PADDR
 ;	End preserve
-;	Use $D030.5 to map-in the Interface ROM
- 	LDA	#%00100000      ; Enable 2.C000
- 	TSB	$D030
-	LDA     #%10011000      ; Disable ROME, ROMA, ROM8
-	TRB     $D030
 	; Use MAP command to map in kernel only ($3.E000 - $3.FFFF -> $E000-EFFF)
 	LDA #%00000000
 	LDX #%00000000
 	LDY #%00000000
 	LDZ #%10000011
 	MAP
-	NOP
+	EOM
 ; 	Recover A, X, Y, cpu flags
 	LDA	PADDR
 	PHA
@@ -55,7 +52,7 @@ MACRO SetBank5Only(QADDR, PADDR)
 	LDY #%00000000
 	LDZ #%11110101
 	MAP
-	NOP
+	EOM
 ; 	Recover A, X, Y, cpu flags
 	LDA	PADDR
 	PHA
@@ -77,7 +74,7 @@ MACRO SetBank5WithInterface(QADDR, PADDR)
 	LDY #%00000000
 	LDZ #%11110101
 	MAP
-	NOP
+	EOM
 ; 	Recover A, X, Y, cpu flags
 	LDA	PADDR
 	PHA

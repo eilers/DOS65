@@ -3,7 +3,7 @@ BSA= ../../bsa/bsa
 
 .PONY: all clean load
 
-all: $(BSA) c65sim.bin sysgn219.com c65loader.prg c65boot.bin c65run.prg 
+all: $(BSA) c65sim.bin sysgn219.com c65boot.bin c65run.prg # c65loader.prg 
 
 clean:
 	rm -f *.bin *.lst *.sym *.prg *_map.png *_map.txt *.com ../*.lst

@@ -1113,10 +1113,6 @@ _RETURN_S
 ; the ccm + pem + sim to its final memory location.
 _INIT_AFTER_LOAD
 	SetBank5Only(S_AXYZ, S_P)
-	LDX	#$FF	; Init stack pointer (low)	
-	TXS
-	LDY	#$00	; Init stack ponter (high)
-	TYS
 	JMP	sim	; start cold boot..
 
 ; Fast copy bytes into copy buffer.
