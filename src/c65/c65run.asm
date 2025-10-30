@@ -219,6 +219,35 @@ _CLALL
 	SetKernalOnly(S_AXYZ, S_P)
 	JSR	CLALL		; IN: -; OUT: -
 	JMP	_RETURN
+_RESET
+	RTS
+_NMI_KERNEL
+	SetKernalOnly(S_AXYZ, S_P)
+	; Set new return address to our IRQ handler
+	LDA	#<_RET_NMI
+	PHA
+	LDA	#>_RET_NMI
+	PHA
+	PHP
+	; Now call the actual IRQ handler
+	; it will return with an RTI to our _RETURN	
+	JMP	(NMI_VECT)
+
+_IRQ_KERNEL
+	SetKernalOnly(S_AXYZ, S_P)
+	; Set new return address to our IRQ handler
+	LDA	#<_RETURN
+	PHA
+	LDA	#>_RETURN
+	PHA
+	PHP
+	; Now call the actual IRQ handler
+	; it will return with an RTI to our _RETURN	
+	JMP	(IRQ_VECT)
+
+_RET_NMI
+	; The RTI will disable IRQs
+	SEI 	; No IRQs while we are executing an NMI
 _RETURN
 	SetBank5WithInterface(S_AXYZ, S_P)	
 	RTS

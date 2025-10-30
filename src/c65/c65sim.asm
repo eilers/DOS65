@@ -1038,67 +1038,87 @@ hstbuf
 ; Code to switch to Kernel
 
 _SETLFS_S
-; 	Enable Interface area
 	JSR	_SetBank5WithInterface
 	JSR	_SETLFS
 	JMP	_RETURN_S
 _SETNAM_S
-; 	Enable Interface area
 	JSR	_SetBank5WithInterface
 	JSR	COPY_TO_COPY_BUFFER
 	JSR 	_SETNAM
 	JMP	_RETURN_S
 
 _OPEN_S
-; 	Enable Interface area
 	JSR	_SetBank5WithInterface
 	JSR	_OPEN
 	JMP	_RETURN_S
 _CLOSE_S
-; 	Enable Interface area
 	JSR	_SetBank5WithInterface
 	JSR	_CLOSE
 	JMP	_RETURN_S
 _CHKIN_S
-; 	Enable Interface area
 	JSR	_SetBank5WithInterface
 	JSR	_CHKIN
 	JMP	_RETURN_S
 _CKOUT_S
-; 	Enable Interface area
 	JSR	_SetBank5WithInterface
 	JSR	_CHKOUT
 	JMP	_RETURN_S
 _CLRCH_S
-; 	Enable Interface area
 	JSR	_SetBank5WithInterface
 	JSR	_CLRCH
 	JMP	_RETURN_S
 _BASIN_S
-; 	Enable Interface area
 	JSR	_SetBank5WithInterface
 	JSR	_BASIN
 	JMP	_RETURN_S
 _BSOUT_S
-; 	Enable Interface area
 	JSR	_SetBank5WithInterface
 	JSR	_BSOUT
 	JMP	_RETURN_S
 _GETIN_S
-; 	Enable Interface area
 	JSR	_SetBank5WithInterface
 	JSR	_GETIN
 	JMP	_RETURN_S
 _CLALL_S
-; 	Enable Interface area
 	JSR	_SetBank5WithInterface
 	JSR	_CLALL
 	JMP	_RETURN_S
 _NMI_S
+	SEI
+	PLA			; Pull processor registers
+	STA	NMI_PR		; and save
+	PLA			; Pull >PC for RTI
+	STA	NMI_PC+1	; and save
+	PLA			; Pull <PC for RTI
+	STA	NMI_PC		; and save
+	JSR	_SetBank5WithInterface
+	JSR	_NMI_KERNEL
+	JSR	_RETURN_S
+	LDA	NMI_PR		; Restore processor registers
+	PHA
+	LDA	NMI_PC		; Restore <PC for RTI
+	PHA
+	LDA	NMI_PC+1	; Restore >PC for RTI
+	PHA
 	RTI
 _RESET_S
-	RTI
-_IRQ_KERNEL_S
+	RTS
+_IRQ_KERNEL_S 			; IRQ is disabled from here
+	PLA			; Pull processor registers
+	STA	IRQ_PR		; and save
+	PLA			; Pull >PC for RTI
+	STA	IRQ_PC+1	; and save
+	PLA			; Pull <PC for RTI
+	STA	IRQ_PC		; and save
+	JSR	_SetBank5WithInterface
+	JSR	_IRQ_KERNEL
+	JSR	_RETURN_S
+	LDA	IRQ_PR		; Restore processor registers
+	PHA
+	LDA	IRQ_PC		; Restore <PC for RTI
+	PHA
+	LDA	IRQ_PC+1	; Restore >PC for RTI
+	PHA
 	RTI
 
 _SetBank5WithInterface
@@ -1145,6 +1165,10 @@ CPYSRH	.byte 	0			; From address High
 
 S_AXYZ	.byte	0,0,0,0	; Save A, X, Y, Z
 S_P	.byte	0	; Save Processor flags
+IRQ_PR	.byte	0	; Store Processor register for IRQ
+IRQ_PC	.word	0	; Stores IRQ return adress for RTI
+NMI_PR	.byte	0	; Store Processor register for NMI
+NMI_PC	.word	0	; Stores IRQ return address for NMI
 
 ; --------------------------------------
 ; Mapping of Mega65 Kernel calls:

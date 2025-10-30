@@ -13,6 +13,15 @@ GETIN	=	$FFE4		;get a character (normally keyboard)
 CLALL	=	$FFE7		;close all files & channels
 SETBNK  =       $FF6B           ;set bank
 
+; Kernel vectors for interrupts
+NMI_VECT	= $FFFA
+RESET_VECT	= $FFFC
+IRQ_VECT	= $FFFE
+
+; Interrupt Entry points
+_NMI_KERNEL	= $2295
+_IRQ_KERNEL	= $22bd
+
 ; Entrypoints SIM -> Transfer -> Kernel
 _SETLFS			= $20fb
 _SETNAM			= $211f
@@ -27,6 +36,6 @@ _GETIN			= $224c
 _CLALL			= $2270
 
 ; Interface copy buffer
-COPY_BUFFER             = $22ba
+COPY_BUFFER             = $230c
 
-_INIT_AFTER_LOAD        = $fe7a ; Cold boot enry after initial load
+_INIT_AFTER_LOAD        = $febd ; Cold boot enry after initial load
