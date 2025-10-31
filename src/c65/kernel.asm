@@ -20,7 +20,7 @@ IRQ_VECT	= $FFFE
 
 ; Interrupt Entry points
 _NMI_KERNEL	= $2295
-_IRQ_KERNEL	= $22bd
+_IRQ_KERNEL	= $22bc
 
 ; Entrypoints SIM -> Transfer -> Kernel
 _SETLFS			= $20fb
@@ -36,6 +36,6 @@ _GETIN			= $224c
 _CLALL			= $2270
 
 ; Interface copy buffer
-COPY_BUFFER             = $230c
+COPY_BUFFER             = $2328
 
-_INIT_AFTER_LOAD        = $febd ; Cold boot enry after initial load
+_INIT_AFTER_LOAD        = $fefb ; Cold boot enry after initial load

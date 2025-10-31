@@ -125,7 +125,7 @@ sysdef	.byte	8		;backspace
 ;bit 7 =
 iotype	.byte	1
 ;opening id message
-opnmsg	.byte	cr,lf,"C64 52K DOS/65 2.15 "
+opnmsg	.byte	cr,lf,"C65 64K DOS/65 2.15 "
 	.byte	"SIM 3.04",0
 ;cold entry from loader
 boot
@@ -1091,15 +1091,16 @@ _NMI_S
 	STA	NMI_PC+1	; and save
 	PLA			; Pull <PC for RTI
 	STA	NMI_PC		; and save
-	JSR	_SetBank5WithInterface
+	JSR	_SetBank5WithInterfaceIRQ
 	JSR	_NMI_KERNEL
-	JSR	_RETURN_S
-	LDA	NMI_PR		; Restore processor registers
-	PHA
+	JSR	_RETURN_IRQ_S
 	LDA	NMI_PC		; Restore <PC for RTI
 	PHA
 	LDA	NMI_PC+1	; Restore >PC for RTI
 	PHA
+	LDA	NMI_PR		; Restore processor registers
+	PHA
+	EOM			; Release Interrupt Latch
 	RTI
 _RESET_S
 	RTS
@@ -1110,23 +1111,32 @@ _IRQ_KERNEL_S 			; IRQ is disabled from here
 	STA	IRQ_PC+1	; and save
 	PLA			; Pull <PC for RTI
 	STA	IRQ_PC		; and save
-	JSR	_SetBank5WithInterface
+	JSR	_SetBank5WithInterfaceIRQ
 	JSR	_IRQ_KERNEL
-	JSR	_RETURN_S
-	LDA	IRQ_PR		; Restore processor registers
-	PHA
+	JSR	_RETURN_IRQ_S
 	LDA	IRQ_PC		; Restore <PC for RTI
 	PHA
 	LDA	IRQ_PC+1	; Restore >PC for RTI
 	PHA
+	LDA	IRQ_PR		; Restore processor registers
+	PHA
+	EOM			; Release Interrupt Latch
 	RTI
 
 _SetBank5WithInterface
 	SetBank5WithInterface(S_AXYZ, S_P)
 	RTS
 
-_RETURN_S
+_SetBank5WithInterfaceIRQ
+	SetBank5WithInterfaceIRQ(S_AXYZ, S_P)
+	RTS
+
+_RETURN_S	; TODO RENAME!
 	SetBank5Only(S_AXYZ, S_P)
+	RTS
+
+_RETURN_IRQ_S
+	SetBank5OnlyIRQ(S_AXYZ, S_P)
 	RTS
 
 ; This is called from the c65run after copying

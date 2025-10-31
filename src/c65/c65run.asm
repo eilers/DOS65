@@ -222,7 +222,7 @@ _CLALL
 _RESET
 	RTS
 _NMI_KERNEL
-	SetKernalOnly(S_AXYZ, S_P)
+	SetKernalOnlyIRQ(S_AXYZ, S_P)
 	; Set new return address to our IRQ handler
 	LDA	#<_RET_NMI
 	PHA
@@ -234,22 +234,26 @@ _NMI_KERNEL
 	JMP	(NMI_VECT)
 
 _IRQ_KERNEL
-	SetKernalOnly(S_AXYZ, S_P)
+	SetKernalOnlyIRQ(S_AXYZ, S_P)
 	; Set new return address to our IRQ handler
-	LDA	#<_RETURN
+	LDA	#<_RETURN_IRQ
 	PHA
-	LDA	#>_RETURN
+	LDA	#>_RETURN_IRQ
 	PHA
 	PHP
 	; Now call the actual IRQ handler
-	; it will return with an RTI to our _RETURN	
+	; it will return with an RTI to our _RETURN_IRQ	
 	JMP	(IRQ_VECT)
+
+_RETURN
+	SetBank5WithInterface(S_AXYZ, S_P)	
+	RTS
 
 _RET_NMI
 	; The RTI will disable IRQs
 	SEI 	; No IRQs while we are executing an NMI
-_RETURN
-	SetBank5WithInterface(S_AXYZ, S_P)	
+_RETURN_IRQ 
+	SetBank5WithInterfaceIRQ(S_AXYZ, S_P)	
 	RTS
 
 K_SPH	.byte	0	; Kernel: Stack pointer high
