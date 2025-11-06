@@ -224,9 +224,9 @@ _RESET
 _NMI_KERNEL
 	SetKernalOnlyIRQ(S_AXYZ, S_P)
 	; Set new return address to our IRQ handler
-	LDA	#<_RET_NMI
-	PHA
 	LDA	#>_RET_NMI
+	PHA
+	LDA	#<_RET_NMI
 	PHA
 	PHP
 	; Now call the actual IRQ handler
@@ -236,9 +236,9 @@ _NMI_KERNEL
 _IRQ_KERNEL
 	SetKernalOnlyIRQ(S_AXYZ, S_P)
 	; Set new return address to our IRQ handler
-	LDA	#<_RETURN_IRQ
-	PHA
 	LDA	#>_RETURN_IRQ
+	PHA
+	LDA	#<_RETURN_IRQ
 	PHA
 	PHP
 	; Now call the actual IRQ handler

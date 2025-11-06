@@ -40,7 +40,7 @@ MACRO SetKernalOnly(QADDR, PADDR)
 ENDMAC
 
 ; Used to Access the Kernel functions
-; This preserces A, X, Y and the cpu flags without
+; This preserves A, X, Y and the cpu flags without
 ; using the stack.
 ; But don't use NOP after MAP (not release Interrupt latch)
 MACRO SetKernalOnlyIRQ(QADDR, PADDR)
