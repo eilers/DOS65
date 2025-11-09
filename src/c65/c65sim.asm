@@ -1085,8 +1085,8 @@ _CLALL_S
 	JMP	_RETURN_S
 _NMI_S
 	SEI
-	PLA			; Pull processor registers
-	STA	NMI_PR		; and save
+	PLA			; Pull processor flags
+	STA	NMI_PF		; and save
 	PLA			; Pull >PC for RTI
 	STA	NMI_PC+1	; and save
 	PLA			; Pull <PC for RTI
@@ -1098,15 +1098,15 @@ _NMI_S
 	PHA
 	LDA	NMI_PC+1	; Restore >PC for RTI
 	PHA
-	LDA	NMI_PR		; Restore processor registers
+	LDA	NMI_PF		; Restore processor registers
 	PHA
 	EOM			; Release Interrupt Latch
 	RTI
 _RESET_S
 	RTS
 _IRQ_KERNEL_S 			; IRQ is disabled from here
-	PLA			; Pull processor registers
-	STA	IRQ_PR		; and save
+	PLA			; Pull processor flags
+	STA	IRQ_PF		; and save
 	PLA			; Pull >PC for RTI
 	STA	IRQ_PC+1	; and save
 	PLA			; Pull <PC for RTI
@@ -1118,7 +1118,7 @@ _IRQ_KERNEL_S 			; IRQ is disabled from here
 	PHA
 	LDA	IRQ_PC+1	; Restore >PC for RTI
 	PHA
-	LDA	IRQ_PR		; Restore processor registers
+	LDA	IRQ_PF		; Restore processor registers
 	PHA
 	EOM			; Release Interrupt Latch
 	RTI
@@ -1175,9 +1175,9 @@ CPYSRH	.byte 	0			; From address High
 
 S_AXYZ	.byte	0,0,0,0	; Save A, X, Y, Z
 S_P	.byte	0	; Save Processor flags
-IRQ_PR	.byte	0	; Store Processor register for IRQ
+IRQ_PF	.byte	0	; Store Processor register for IRQ
 IRQ_PC	.word	0	; Stores IRQ return adress for RTI
-NMI_PR	.byte	0	; Store Processor register for NMI
+NMI_PF	.byte	0	; Store Processor register for NMI
 NMI_PC	.word	0	; Stores IRQ return address for NMI
 
 ; --------------------------------------

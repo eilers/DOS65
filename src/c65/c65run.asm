@@ -222,25 +222,31 @@ _CLALL
 _RESET
 	RTS
 _NMI_KERNEL
+	LDA	NMI_PF		; Load original NMI processor flags from Bank 5
+	STA	S_P		; Store in save area on Bank 0
 	SetKernalOnlyIRQ(S_AXYZ, S_P)
 	; Set new return address to our IRQ handler
 	LDA	#>_RET_NMI
 	PHA
 	LDA	#<_RET_NMI
 	PHA
-	PHP
+	LDA	S_P		; Set processor flags for RTI
+	PHA
 	; Now call the actual IRQ handler
 	; it will return with an RTI to our _RETURN	
 	JMP	(NMI_VECT)
 
 _IRQ_KERNEL
+	LDA	IRQ_PF		; Load original IRQ processor flags from Bank 5
+	STA	S_P		; Store in save area on Bank 0
 	SetKernalOnlyIRQ(S_AXYZ, S_P)
 	; Set new return address to our IRQ handler
 	LDA	#>_RETURN_IRQ
 	PHA
 	LDA	#<_RETURN_IRQ
 	PHA
-	PHP
+	LDA	S_P		; Set processor flags for RTI
+	PHA
 	; Now call the actual IRQ handler
 	; it will return with an RTI to our _RETURN_IRQ	
 	JMP	(IRQ_VECT)
