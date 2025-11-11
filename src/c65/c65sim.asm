@@ -1085,6 +1085,7 @@ _CLALL_S
 	JMP	_RETURN_S
 _NMI_S
 	SEI
+	STQ	NMI_QADDR	; Save A,X,Y,Z
 	PLA			; Pull processor flags
 	STA	NMI_PF		; and save
 	PLA			; Pull >PC for RTI
@@ -1100,11 +1101,13 @@ _NMI_S
 	PHA
 	LDA	NMI_PF		; Restore processor registers
 	PHA
+	LDQ	NMI_QADDR	; Restore A,X,Y,Z
 	EOM			; Release Interrupt Latch
 	RTI
 _RESET_S
 	RTS
 _IRQ_KERNEL_S 			; IRQ is disabled from here
+	STQ	IRQ_QADDR	; Save A,X,Y,Z
 	PLA			; Pull processor flags
 	STA	IRQ_PF		; and save
 	PLA			; Pull >PC for RTI
@@ -1120,6 +1123,7 @@ _IRQ_KERNEL_S 			; IRQ is disabled from here
 	PHA
 	LDA	IRQ_PF		; Restore processor registers
 	PHA
+	LDQ	IRQ_QADDR	; Restore A,X,Y,Z
 	EOM			; Release Interrupt Latch
 	RTI
 
@@ -1177,8 +1181,10 @@ S_AXYZ	.byte	0,0,0,0	; Save A, X, Y, Z
 S_P	.byte	0	; Save Processor flags
 IRQ_PF	.byte	0	; Store Processor register for IRQ
 IRQ_PC	.word	0	; Stores IRQ return adress for RTI
+IRQ_QADDR .byte	0,0,0,0	; Stores A,X,Y,Z for IRQ
 NMI_PF	.byte	0	; Store Processor register for NMI
 NMI_PC	.word	0	; Stores IRQ return address for NMI
+NMI_QADDR .byte	0,0,0,0	; Stores A,X,Y,Z for NMI
 
 ; --------------------------------------
 ; Mapping of Mega65 Kernel calls:
