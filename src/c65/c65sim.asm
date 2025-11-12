@@ -1205,6 +1205,8 @@ NMI_QADDR .byte	0,0,0,0	; Stores A,X,Y,Z for NMI
 	JMP	_CKOUT_S
 	*= CLRCH
 	JMP	_CLRCH_S
+	*= BASIN
+	JMP	_BASIN_S
 	*= BSOUT
 	JMP	_BSOUT_S
 	*= GETIN
