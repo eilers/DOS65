@@ -1088,16 +1088,16 @@ _NMI_S
 	STQ	NMI_QADDR	; Save A,X,Y,Z
 	PLA			; Pull processor flags
 	STA	NMI_PF		; and save
-	PLA			; Pull >PC for RTI
-	STA	NMI_PC+1	; and save
 	PLA			; Pull <PC for RTI
-	STA	NMI_PC		; and save
+	STA	NMI_PC 		; and save
+	PLA			; Pull >PC for RTI
+	STA	NMI_PC + 1	; and save
 	JSR	_SetBank5WithInterfaceIRQ
 	JSR	_NMI_KERNEL
 	JSR	_RETURN_IRQ_S
-	LDA	NMI_PC		; Restore <PC for RTI
+	LDA	NMI_PC + 1	; Restore >PC for RTI
 	PHA
-	LDA	NMI_PC+1	; Restore >PC for RTI
+	LDA	NMI_PC 		; Restore <PC for RTI
 	PHA
 	LDA	NMI_PF		; Restore processor registers
 	PHA
@@ -1110,16 +1110,16 @@ _IRQ_KERNEL_S 			; IRQ is disabled from here
 	STQ	IRQ_QADDR	; Save A,X,Y,Z
 	PLA			; Pull processor flags
 	STA	IRQ_PF		; and save
-	PLA			; Pull >PC for RTI
-	STA	IRQ_PC+1	; and save
 	PLA			; Pull <PC for RTI
-	STA	IRQ_PC		; and save
+	STA	IRQ_PC 		; and save
+	PLA			; Pull >PC for RTI
+	STA	IRQ_PC + 1	; and save
 	JSR	_SetBank5WithInterfaceIRQ
 	JSR	_IRQ_KERNEL
 	JSR	_RETURN_IRQ_S
-	LDA	IRQ_PC		; Restore <PC for RTI
+	LDA	IRQ_PC + 1	; Restore >PC for RTI
 	PHA
-	LDA	IRQ_PC+1	; Restore >PC for RTI
+	LDA	IRQ_PC 		; Restore <PC for RTI
 	PHA
 	LDA	IRQ_PF		; Restore processor registers
 	PHA

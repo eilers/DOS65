@@ -233,7 +233,7 @@ _NMI_KERNEL
 	LDA	S_P		; Set processor flags for RTI
 	PHA
 	; Now call the actual IRQ handler
-	; it will return with an RTI to our _RETURN	
+	; it will return with an RTI to our _RET_NMI	
 	JMP	(NMI_VECT)
 
 _IRQ_KERNEL
@@ -265,7 +265,7 @@ _RETURN_IRQ
 K_SPH	.byte	0	; Kernel: Stack pointer high
 K_SPL	.byte	0	; Kernel: Stack pointer low
 S_AXYZ	.byte	0,0,0,0	; Save A, X, Y, Z
-S_P	.byte	0	; Save Processor flags
+S_P	.byte	0	; Save Processor flags from Bank 5
 COPY_BUFFER
 	*= 	*+80
 End_Run 	
