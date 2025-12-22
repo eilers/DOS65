@@ -179,8 +179,8 @@ _SETNAM
 	JSR	SETBNK
 	; Filename was stored in COPY_BUFFER. Length is in A
 	PLA
-	LDX	<COPY_BUFFER
-	LDY	>COPY_BUFFER
+	LDX	#<COPY_BUFFER
+	LDY	#>COPY_BUFFER
 	JSR	SETNAM		; IN: A, X, Y; OUT: None	
 	JMP	_RETURN
 _OPEN	; TODO: Ensure that C stays alive..

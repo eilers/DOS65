@@ -1062,7 +1062,7 @@ _CHKIN_S
 	JMP	_RETURN_S
 _CKOUT_S
 	JSR	_SetBank5WithInterface
-	JSR	_CHKOUT
+	JSR	_CKOUT
 	JMP	_RETURN_S
 _CLRCH_S
 	JSR	_SetBank5WithInterface
