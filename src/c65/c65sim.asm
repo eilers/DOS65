@@ -1132,7 +1132,7 @@ _SetBank5WithInterface
 	RTS
 
 _SetBank5WithInterfaceIRQ
-	SetBank5WithInterfaceIRQ(S_AXYZ, S_P)
+	SetBank5WithInterfaceIRQ(S_AXYZI, S_PI)
 	RTS
 
 _RETURN_S	; TODO RENAME!
@@ -1140,7 +1140,7 @@ _RETURN_S	; TODO RENAME!
 	RTS
 
 _RETURN_IRQ_S
-	SetBank5OnlyIRQ(S_AXYZ, S_P)
+	SetBank5OnlyIRQ(S_AXYZI, S_PI)
 	RTS
 
 ; This is called from the c65run after copying
@@ -1179,6 +1179,8 @@ CPYSRH	.byte 	0			; From address High
 
 S_AXYZ	.byte	0,0,0,0	; Save A, X, Y, Z
 S_P	.byte	0	; Save Processor flags
+S_AXYZI	.byte	0,0,0,0	; Save A, X, Y, Z for Interrupts
+S_PI	.byte	0	; Save Processor flags from Bank 5 for Interrupts
 IRQ_PF	.byte	0	; Store Processor register for IRQ
 IRQ_PC	.word	0	; Stores IRQ return adress for RTI
 IRQ_QADDR .byte	0,0,0,0	; Stores A,X,Y,Z for IRQ

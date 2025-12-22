@@ -219,12 +219,16 @@ _CLALL
 	SetKernalOnly(S_AXYZ, S_P)
 	JSR	CLALL		; IN: -; OUT: -
 	JMP	_RETURN
+_RETURN
+	SetBank5WithInterface(S_AXYZ, S_P)	
+	RTS
+
 _RESET
 	RTS
 _NMI_KERNEL
 	LDA	NMI_PF		; Load original NMI processor flags from Bank 5
 	STA	S_P		; Store in save area on Bank 0
-	SetKernalOnlyIRQ(S_AXYZ, S_P)
+	SetKernalOnlyIRQ(S_AXYZI, S_PI)
 	; Set new return address to our IRQ handler
 	LDA	#>_RET_NMI
 	PHA
@@ -232,14 +236,14 @@ _NMI_KERNEL
 	PHA
 	LDA	S_P		; Set processor flags for RTI
 	PHA
-	; Now call the actual IRQ handler
+	; Now call the actual NMI handler
 	; it will return with an RTI to our _RET_NMI	
 	JMP	(NMI_VECT)
 
 _IRQ_KERNEL
 	LDA	IRQ_PF		; Load original IRQ processor flags from Bank 5
 	STA	S_P		; Store in save area on Bank 0
-	SetKernalOnlyIRQ(S_AXYZ, S_P)
+	SetKernalOnlyIRQ(S_AXYZI, S_PI)
 	; Set new return address to our IRQ handler
 	LDA	#>_RETURN_IRQ
 	PHA
@@ -251,21 +255,19 @@ _IRQ_KERNEL
 	; it will return with an RTI to our _RETURN_IRQ	
 	JMP	(IRQ_VECT)
 
-_RETURN
-	SetBank5WithInterface(S_AXYZ, S_P)	
-	RTS
-
 _RET_NMI
 	; The RTI will disable IRQs
 	SEI 	; No IRQs while we are executing an NMI
 _RETURN_IRQ 
-	SetBank5WithInterfaceIRQ(S_AXYZ, S_P)	
+	SetBank5WithInterfaceIRQ(S_AXYZI, S_PI)	
 	RTS
 
 K_SPH	.byte	0	; Kernel: Stack pointer high
 K_SPL	.byte	0	; Kernel: Stack pointer low
 S_AXYZ	.byte	0,0,0,0	; Save A, X, Y, Z
 S_P	.byte	0	; Save Processor flags from Bank 5
+S_AXYZI	.byte	0,0,0,0	; Save A, X, Y, Z for Interrupts
+S_PI	.byte	0	; Save Processor flags from Bank 5 for Interrupts
 COPY_BUFFER
 	*= 	*+80
 End_Run 	
