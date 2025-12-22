@@ -14,8 +14,8 @@ load:	all
 	/Applications/m65tools/m65dbg -l /dev/cu.usbserial-1101 
 	
 xemu:	all
-	/Users/stefan/Developer/c65/xemu/build/bin/xmega65.native -prg ./c65run.prg -prgtest "print \"run\""  -uartmon :4510 -8 ../../disks/V2/C64/DOS65-1C.D64  &
-	/Applications/m65tools/m65dbg -l tcp
+	/Users/stefan/Developer/c65/xemu_gurce/build/bin/xmega65.native -prg ./c65run.prg -prgtest "print \"run\""  -uartmon :4510 -8 ../../disks/V2/C64/DOS65-1C.D64  &
+	/Users/stefan/Developer/c65/m65dbg/m65dbg -l tcp
 
 $(BSA): ../../bsa/bsa.c
 	$(MAKE) -C ../../bsa
