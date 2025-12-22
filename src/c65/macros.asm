@@ -86,7 +86,7 @@ MACRO SetBank5Only(QADDR, PADDR)
 ;	End Recover
 ENDMAC
 
-; Use Bank 5 complete (64k)
+; Use Bank 5 but keep $0.2000-$0.3FFF for interface code
 MACRO SetBank5WithInterface(QADDR, PADDR)
 ; 	Preserve A, X, Y, cpu flags
 	PHP
@@ -108,8 +108,32 @@ MACRO SetBank5WithInterface(QADDR, PADDR)
 ;	End Recover
 ENDMAC
 
-; Use Bank 5 complete (64k)
-; But don't user NOP after MAP (not release Interrupt latch)
+; Use Bank 5 but keep $0.2000-$0.3FFF for interface code
+; and $0.D000 for DMA access
+MACRO SetBank5WithInterfaceAndDMA(QADDR, PADDR)
+; 	Preserve A, X, Y, cpu flags
+	PHP
+	STQ	QADDR
+	PLA
+	STA	PADDR
+;	End preserve
+	LDA #%00000000
+	LDX #%11010101  ; Access $2000 - $3FFF
+	LDY #%00000000
+	LDZ #%10110101
+	MAP
+	EOM
+; 	Recover A, X, Y, cpu flags
+	LDA	PADDR
+	PHA
+	LDQ	QADDR
+	PLP
+;	End Recover
+ENDMAC
+
+
+; Use Bank 5 but keep $0.2000-$0.3FFF for interface code
+; But don't use NOP after MAP (not release Interrupt latch)
 MACRO SetBank5WithInterfaceIRQ(QADDR, PADDR)
 ; 	Preserve A, X, Y, cpu flags
 	PHP

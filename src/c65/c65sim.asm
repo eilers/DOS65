@@ -1042,8 +1042,9 @@ _SETLFS_S
 	JSR	_SETLFS
 	JMP	_RETURN_S
 _SETNAM_S
-	JSR	_SetBank5WithInterface
+	JSR	_SetBank5WithInterfaceAndDMA
 	JSR	COPY_TO_COPY_BUFFER
+	JSR	_SetBank5WithInterface
 	JSR 	_SETNAM
 	JMP	_RETURN_S
 
@@ -1131,6 +1132,10 @@ _SetBank5WithInterface
 	SetBank5WithInterface(S_AXYZ, S_P)
 	RTS
 
+_SetBank5WithInterfaceAndDMA
+	SetBank5WithInterfaceAndDMA(S_AXYZ, S_P)
+	RTS
+
 _SetBank5WithInterfaceIRQ
 	SetBank5WithInterfaceIRQ(S_AXYZI, S_PI)
 	RTS
@@ -1157,14 +1162,14 @@ COPY_TO_COPY_BUFFER
 	STA	CPYLEN		; Only low byte required
 	STX	CPYSRL
 	STY	CPYSRH
-	PHA
+	PHA			; Protect the length
 	LDA	#$05		; DMA list exists in Bank 0
 	STA	$D702
 	LDA	#>CPY_DMA
 	STA	$D701
 	LDA	#<CPY_DMA
 	STA	$D700		; Execute copy via DMS
-	PLA
+	PLA			; Restore length
 	RTS
 CPY_DMA
 	.byte	$00			; Command low byte: COPY
