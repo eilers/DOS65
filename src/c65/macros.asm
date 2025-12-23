@@ -30,13 +30,13 @@ MACRO SetKernalOnly(QADDR, PADDR)
 	LDY #%00000000
 	LDZ #%10000011
 	MAP
-	EOM
 ; 	Recover A, X, Y, cpu flags
 	LDA	PADDR
 	PHA
 	LDQ	QADDR
 	PLP
 ;	End Recover
+	EOM
 ENDMAC
 
 ; Used to Access the Kernel functions
@@ -77,13 +77,13 @@ MACRO SetBank5Only(QADDR, PADDR)
 	LDY #%00000000
 	LDZ #%11110101
 	MAP
-	EOM
 ; 	Recover A, X, Y, cpu flags
 	LDA	PADDR
 	PHA
 	LDQ	QADDR
 	PLP
 ;	End Recover
+	EOM
 ENDMAC
 
 ; Use Bank 5 but keep $0.2000-$0.3FFF for interface code
@@ -99,13 +99,13 @@ MACRO SetBank5WithInterface(QADDR, PADDR)
 	LDY #%00000000
 	LDZ #%11110101
 	MAP
-	EOM
 ; 	Recover A, X, Y, cpu flags
 	LDA	PADDR
 	PHA
 	LDQ	QADDR
 	PLP
 ;	End Recover
+	EOM
 ENDMAC
 
 ; Use Bank 5 but keep $0.2000-$0.3FFF for interface code
@@ -122,13 +122,13 @@ MACRO SetBank5WithInterfaceAndDMA(QADDR, PADDR)
 	LDY #%00000000
 	LDZ #%10110101
 	MAP
-	EOM
 ; 	Recover A, X, Y, cpu flags
 	LDA	PADDR
 	PHA
 	LDQ	QADDR
 	PLP
 ;	End Recover
+	EOM
 ENDMAC
 
 
