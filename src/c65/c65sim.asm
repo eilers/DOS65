@@ -1133,6 +1133,7 @@ _IRQ_KERNEL_S 			; IRQ is disabled from here
 	RTI
 
 _SetBank5WithInterface
+	SEI			; Disable IRQ while kernel call
 	SetBank5WithInterface(S_AXYZ, S_P)
 	RTS
 
@@ -1146,6 +1147,7 @@ _SetBank5WithInterfaceIRQ
 
 _RETURN_S	; TODO RENAME!
 	SetBank5Only(S_AXYZ, S_P)
+	CLI			; Re-enable IRQs after kernel call
 	RTS
 
 _RESTORE_BANK_IRQ
