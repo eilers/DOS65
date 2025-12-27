@@ -125,7 +125,7 @@ sysdef	.byte	8		;backspace
 ;bit 7 =
 iotype	.byte	1
 ;opening id message
-opnmsg	.byte	cr,lf,"C65 64K DOS/65 2.15 "
+opnmsg	.byte	cr,lf,"Mega65 57K DOS/65 2.15 "
 	.byte	"SIM 3.04",0
 ;cold entry from loader
 boot

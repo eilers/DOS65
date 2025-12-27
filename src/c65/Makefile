@@ -10,7 +10,7 @@ clean:
 	$(MAKE) -C ../../bsa clean
 
 load:	all
-	/Applications/m65tools/m65.osx c65run.prg
+	/Applications/m65tools/m65.osx -l /dev/cu.usbserial-1101 c65run.prg
 	/Applications/m65tools/m65dbg -l /dev/cu.usbserial-1101 
 	
 xemu:	all
