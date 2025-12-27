@@ -49,6 +49,9 @@ nrmvid				;normal video char
 invvid				;invert video char
 	*=	*+1
 LZ
+
+	.STORE TEA,ENDE-TEA,"disk/MORE.COM"
+
 ;main program
 	*=	TEA
 	JSR	CLRVAR		;clear variables
@@ -219,3 +222,4 @@ chrout	PHA			;save again
 	sta	chrcnt
 CHREXT	RTS			;quit
 	.END
+ENDE

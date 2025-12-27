@@ -1,6 +1,7 @@
 *.bin
 *.prg
-*.com
+*.COM
 *.lst
+src/c65/disk
 src/c65/.history.txt
 src/zrun/lib6502
