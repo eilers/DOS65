@@ -81,3 +81,4 @@ distribution: all $(COM_FILES)
 	rm $(DISK)
 	$(CFORMAT) -0 $(DISK)
 	$(CTOOLS) $(DISK) p disk/*.COM 
+	$(CTOOLS) $(DISK) p ../basic/*.BAS 
