@@ -48,9 +48,7 @@ pemjmp	=	$103		;pem entry
 iostat	=	$106		;io status byte
 dflbuf	=	$128		;default buffer
 ;C64 KERNAL (kernel) entry points & assigned memeory
-flash	=	$cc		;enable cursor flas if 0
-cursor	=	$cf		;cursor chaaracter (BLNON in PRG)
-qtsw	=	$d4		;quote mode 0=no
+qtsw	=	$d4		;quote mode 0=no TODO!
 ;pem constants on entry to write
 wrall	=	0		;write to allocated
 wrdir	=	1		;write to directory
@@ -131,9 +129,6 @@ opnmsg	.byte	cr,lf,"Mega65 57K DOS/65 2.15 "
 boot
 ;first clear all files and channels
 	jsr	CLALL		;loader should do this but make sure
-;now send a series of characters to screen to set it up
-	lda	#' '		;set cursor
-	sta	cursor		;to space
 ;now enable interrupts and set up screen
 	cli			;enable interrupts
  	LDA	#9		;enable char set change
@@ -245,8 +240,8 @@ constx	rts
 ;this routine should not display the character entered
 ;input: none
 ;return: character in a
-conin	lda	#0		;turn on flash
-	sta	flash
+conin	clc			; Enable Cusor
+	jsr	CURSOR
 coninl	jsr	const		;check status
 	and	#%11111111	;see if something there
 	beq	coninl		;loop if nothing
@@ -254,8 +249,8 @@ coninl	jsr	const		;check status
 	pha			;save it
 	lda	#0		;clear save
 	sta	chrsav
-	lda	#%00000001	;turn off flash
-	sta	flash
+	sec			;disable cursor
+	jsr	CURSOR
 	lda	#' '		;send space
 	jsr	conout
 	lda	#157		;cursor left command
@@ -1036,7 +1031,10 @@ hstbuf
 	*=	*+256		;256 byte sectors
 
 ; Code to switch to Kernel
-
+_CURSOR_S
+	JSR	_SetBank5WithInterface
+	JSR	_CURSOR
+	JMP	_RETURN_S
 _SETLFS_S
 	JSR	_SetBank5WithInterface
 	JSR	_SETLFS
@@ -1047,7 +1045,6 @@ _SETNAM_S
 	JSR	_SetBank5WithInterface
 	JSR 	_SETNAM
 	JMP	_RETURN_S
-
 _OPEN_S
 	JSR	_SetBank5WithInterface
 	JSR	_OPEN
@@ -1212,10 +1209,11 @@ NMI_PC	.word	0	; Stores IRQ return address for NMI
 NMI_QADDR .byte	0,0,0,0	; Stores A,X,Y,Z for NMI
 
 ; --------------------------------------
-; Mapping of Mega65 Kernel calls:
-; 1. Enable Interface bank ($2000-$3FFF)
-; 2. 
+; Mapping of Mega65 Kernel calls to 
+; interface calls
 ; --------------------------------------
+	*= CURSOR
+	JMP	_CURSOR_S
 	*= SETLFS
 	JMP	_SETLFS_S
 	*= SETNAM

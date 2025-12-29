@@ -16,8 +16,8 @@ load:	all
 	/Applications/m65tools/m65.osx -l /dev/cu.usbserial-1101 c65run.prg
 	/Applications/m65tools/m65dbg -l /dev/cu.usbserial-1101 
 	
-xemu:	all
-	/Users/stefan/Developer/c65/xemu_gurce/build/bin/xmega65.native -prg ./c65run.prg -prgtest "print \"run\""  -uartmon :4510 -8 ../../disks/V2/C64/DOS65-1C.D64  &
+xemu:	all distribution
+	/Users/stefan/Developer/c65/xemu_gurce/build/bin/xmega65.native -prg ./c65run.prg -prgtest "print \"run\""  -uartmon :4510 -8 $(DISK)  &
 	/Users/stefan/Developer/c65/m65dbg/m65dbg -l tcp
 
 $(BSA): ../../bsa/bsa.c
@@ -52,11 +52,12 @@ c65run.prg: c65run.asm c65sim.bin ../constants.asm macros.asm kernel.asm
 
 # List of ASM files to build as COM files
 # Add or remove entries from this list as needed
-ASM_FILES = MORE202.ASM 
-#            EDIT205.ASM \
-            RUN207.ASM \
-            ASM213.ASM \
+ASM_FILES = MORE202.ASM \
             BASIC202.ASM \
+            RUN207.ASM \
+	    ASM213.ASM 
+#            EDIT205.ASM \
+            ASM213.ASM \
             COMPL205.ASM \
             COMPR204.ASM \
             DEBUG204.ASM \
@@ -82,3 +83,4 @@ distribution: all $(COM_FILES)
 	$(CFORMAT) -0 $(DISK)
 	$(CTOOLS) $(DISK) p disk/*.COM 
 	$(CTOOLS) $(DISK) p ../basic/*.BAS 
+	#$(CTOOLS) $(DISK) p ../RUN207.ASM

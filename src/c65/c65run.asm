@@ -166,6 +166,10 @@ NLTXT   .byte	CR,0
 ; This is called with Bank 5 pulled in. Only $2000 - $3FFF is
 ; from Bank 0
 ; TODO: Check that SP is unchanged after Kernel call!
+_CURSOR
+	SetKernalOnly(S_AXYZ, S_P)
+	JSR	CURSOR		; IN: C; OUT: None	
+	JMP	_RETURN
 _SETLFS
 	SetKernalOnly(S_AXYZ, S_P)
 	JSR	SETLFS		; IN: A, X, Y; OUT: None	

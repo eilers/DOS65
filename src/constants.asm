@@ -8,7 +8,7 @@ tea	=	$200		;tea start
 ccmlng	=	2037		;ccm length
 pemlng	=	3047		;pem length
 msize	=	64		;memory size in 1k blocks
-pages	=	10		;pages in sim
+pages	=	11		;pages in sim
 memlng	=	msize*1024	;memory length in bytes
 
 ;fixed parameters

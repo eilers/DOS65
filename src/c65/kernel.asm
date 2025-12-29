@@ -1,4 +1,5 @@
 ; Kernel entry points
+CURSOR	=	$FF35		;enable (C=0) or disable (C=1) cursor
 SETLFS	=	$FFBA		;set LA, FA, SA
 SETNAM	=	$FFBD		;set length & file name address
 OPEN	=	$FFC0		;open logical file
@@ -19,27 +20,28 @@ RESET_VECT	= $FFFC
 IRQ_VECT	= $FFFE
 
 ; Interrupt Entry points
-_NMI_KERNEL	= $22b4
-_IRQ_KERNEL	= $22e4
+_NMI_KERNEL	= $22d8
+_IRQ_KERNEL	= $2308
 
 ; Exchange area for preserving interrupt related data
-IRQ_PF	= $ffab		; Processor flags for IRQ on Bank 5
-NMI_PF	= $ffb2		; Processor flags for NMI on Bank 5
+IRQ_PF	= $feb3		; Processor flags for IRQ on Bank 5
+NMI_PF	= $feba		; Processor flags for NMI on Bank 5
 
 ; Entrypoints SIM -> Transfer -> Kernel
-_SETLFS			= $20fb
-_SETNAM			= $211f
-_OPEN			= $2150
-_CLOSE			= $2174
-_CHKIN			= $2198
-_CKOUT			= $21bc
-_CLRCH			= $21e0
-_BASIN			= $2204
-_BSOUT                  = $2228
-_GETIN			= $224c
-_CLALL			= $2270
+_CURSOR                 = $20fb
+_SETLFS			= $211f
+_SETNAM			= $2143
+_OPEN			= $2174
+_CLOSE			= $2198
+_CHKIN			= $21bc
+_CKOUT			= $21e0
+_CLRCH			= $2204
+_BASIN			= $2228
+_BSOUT                  = $224c
+_GETIN			= $2270
+_CLALL			= $2294
 
 ; Interface copy buffer
-COPY_BUFFER             = $233f
+COPY_BUFFER             = $2363
 
-_INIT_AFTER_LOAD        = $ff59 ; Cold boot enry after initial load
+_INIT_AFTER_LOAD        = $fe61 ; Cold boot enry after initial load
