@@ -212,6 +212,9 @@ nkmflg				;no kim file output if > 127
 strdel				;string delimiter in .byt
 	*=	*+1
 LASTZP
+
+	.STORE TEA,ENDE-TEA,"disk/ASM.COM"
+
 ;entry point
 	*=	TEA
 	JMP	MAIN		;skip to main section
@@ -360,10 +363,10 @@ lstout	bit	nlsflg		;test for no list output
 	bpl	*+5		;if clear to disk
 	jmp	cnsout		;else to console
 	LDX	LSTIND		;get low index
-	CPX	#LSTBUF+LSTLNG*256/256	;compare to limit
+	CPX	#<(LSTBUF+LSTLNG)	;compare to limit
 	BNE	NOLSWR		;jump if ok
 	LDX	LSTIND+1	;else try
-	CPX	#LSTBUF+LSTLNG/256	;same for high
+	CPX	#>(LSTBUF+LSTLNG)	;same for high
 	BNE	NOLSWR		;ok if different
 	PHA			;save char
 	JSR	WRTLST		;write buffer
@@ -438,10 +441,10 @@ KIMBYT	PHA			;save byte
 KIMHEX	JSR	NIBHEX		;convert
 ;kim file char output
 KIMOUT	LDX	KIMIND		;compare index
-	CPX	#KIMBUF+KIMLNG*256/256	;to limit
+	CPX	#<(KIMBUF+KIMLNG);to limit
 	BNE	NOKMWR		;continue if less
 	LDX	KIMIND+1	;do same
-	CPX	#KIMBUF+KIMLNG/256	;for
+	CPX	#>(KIMBUF+KIMLNG);for
 	BNE	NOKMWR		;high bytes
 	PHA			;save byte
 	JSR	WRTKIM		;write buffer
@@ -1411,9 +1414,9 @@ EXT	CLC
 	RTS
 ;get next source char
 GNX	LDA	SRCIND		;if index
-	CMP	#SRCBUF+SRCLNG*256/256	;is less
+	CMP	#<(SRCBUF+SRCLNG);is less
 	LDA	SRCIND+1	;than
-	SBC	#SRCBUF+SRCLNG/256	;maximum
+	SBC	#>(SRCBUF+SRCLNG);maximum
 	BCC	BUFULL		;use it
 	JSR	CLSIND		;else set to start
 	LDA	#SRCLNG/128	;set number
@@ -2593,8 +2596,8 @@ NXT	LDX	#$FB		;recover to JSR PROCES
 	CLC			;not EOF
 	RTS
 ;do one pass through the source file
-DOPASS	LDA	#SRCBUF+SRCLNG*256/256	;set index
-	LDY	#SRCBUF+SRCLNG/256	;to
+DOPASS	LDA	#<(SRCBUF+SRCLNG);set index
+	LDY	#>(SRCBUF+SRCLNG);to
 	STA	SRCIND		;illegal
 	STY	SRCIND+1	;value
 	JSR	PROCES
@@ -2966,3 +2969,4 @@ ECHBUF				;echo buffer
 ;length is determined by symlen
 sym
 	.END
+ENDE

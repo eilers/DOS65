@@ -195,6 +195,9 @@ TKRIGH	=	TKLEFT+1
 TKMID	=	TKRIGH+1
 ;following are token related definitions
 FUNOFS	=	TKSGN-128*2	;offset in function table
+
+	.STORE TEA,ENDE-TEA,"disk/BASIC.COM"
+
 ;program code starts here
 *	=	TEA
 ;The entry address and the following address are
@@ -1949,7 +1952,7 @@ L0E4A	ASL	A
 	PHA
 	TAX
 	JSR	GETCHR
-	CPX	#TKLEFT*2*256/256-1	;see if one param only
+	CPX	#<(TKLEFT*2)-1	;see if one param only
 	BCC	L0E74
 	JSR	CHKOP
 	JSR	L0CCD
@@ -5554,4 +5557,4 @@ scnblk	inc	chrpnt		;bump pointer
 ;RND work area
 	.byte	$80,$4F,$C7,$52,$58
 	.END
-
+ENDE

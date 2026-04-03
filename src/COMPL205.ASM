@@ -350,6 +350,9 @@ STRPTR				;temp in ginils
 IGEN				;temp in gencon
 	*=	*+1
 LZ
+
+	.STORE TEA,ENDE-TEA,"disk/COMPILE.COM"
+
 ;entry point
 	*=	TEA
 	JMP	MAIN
@@ -405,33 +408,33 @@ PRNDEC	STA	DECOUT		;save
 	LDX	#'0'-1		;set digit to '0' - 1
 	SEC			;now
 P10000	LDA	DECOUT		;subtract
-	SBC	#10000*256/256	;10000
+	SBC	#<10000 	;10000
 	STA	DECOUT		;from
 	LDA	DECOUT+1	;value
-	SBC	#10000/256	;and
+	SBC	#>10000	        ;and
 	STA	DECOUT+1	;save
 	INX			;bump digit
 	BCS	P10000		;loop if no borrow
 	LDA	DECOUT		;else
-	ADC	#10000*256/256	;add
+	ADC	#<10000		;add
 	STA	DECOUT		;10000
 	LDA	DECOUT+1	;back
-	ADC	#10000/256	;in to
+	ADC	#>10000		;in to
 	STA	DECOUT+1	;correct
 	JSR	DIGOUT		;send digit
 P1000	LDA	DECOUT		;now
-	SBC	#1000*256/256	;drop
+	SBC	#<1000		;drop
 	STA	DECOUT		;by
 	LDA	DECOUT+1	;1000
-	SBC	#1000/256	;until
+	SBC	#>1000		;until
 	STA	DECOUT+1	;a borrow
 	INX			;bump digit
 	BCS	P1000		;loop if more
 	LDA	DECOUT		;now
-	ADC	#1000*256/256	;add
+	ADC	#<1000		;add
 	STA	DECOUT		;1000
 	LDA	DECOUT+1	;back
-	ADC	#1000/256	;in to
+	ADC	#>1000		;in to
 	STA	DECOUT+1	;correct
 	JSR	DIGOUT		;send 1000s
 P100	LDA	DECOUT		;now
@@ -3458,3 +3461,4 @@ CONBUF				;console
 ;start of free memory
 MEMORY
 	.END
+ENDE

@@ -230,6 +230,9 @@ AP				;accum index
 TBASE				;temp in build
 	*=	*+2
 LZ
+
+	.STORE TEA,ENDE-TEA,"disk/RUN.COM"
+
 ;ENTRY POINT
 	*=	TEA
 	JMP	BUILD
@@ -2349,33 +2352,33 @@ PRNDEC	STA	DECOUT
 	LDX	#'0'-1		;set digit to '0' minus one
 	SEC
 P10000	LDA	DECOUT
-	SBC	#10000*256/256
+	SBC	#<(10000)
 	STA	DECOUT
 	LDA	DECOUT+1
-	SBC	#10000/256
+	SBC	#>(10000)
 	STA	DECOUT+1	;subtract 10000
 	INX			;bump digit
 	BCS	P10000		;loop if no borrow
 	LDA	DECOUT
-	ADC	#10000*256/256
+	ADC	#<(10000)
 	STA	DECOUT
 	LDA	DECOUT+1
-	ADC	#10000/256
+	ADC	#>(10000)
 	STA	DECOUT+1	;add 10000 back in
 	JSR	DIGOUT		;send digit
 P1000	LDA	DECOUT
-	SBC	#1000*256/256
+	SBC	#<(1000)
 	STA	DECOUT
 	LDA	DECOUT+1
-	SBC	#1000/256
+	SBC	#>(1000)
 	STA	DECOUT+1	;subtract 1000
 	INX
 	BCS	P1000		;loop if no borrow
 	LDA	DECOUT
-	ADC	#1000*256/256
+	ADC	#<(1000)
 	STA	DECOUT
 	LDA	DECOUT+1
-	ADC	#1000/256
+	ADC	#>(1000)
 	STA	DECOUT+1	;add 1000 back in
 	JSR	DIGOUT		;send digit
 P100	LDA	DECOUT
@@ -5230,3 +5233,4 @@ OPNMSG	.byte	"BASIC-E/65 INTERPRETER"
 ;build memory
 BMEM
 	.END
+ENDE
