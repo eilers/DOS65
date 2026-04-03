@@ -62,6 +62,7 @@ MACRO SetKernalOnlyIRQ(QADDR, PADDR)
 	LDQ	QADDR
 	PLP
 ;	End Recover
+	EOM
 ENDMAC
 
 ; Use Bank 5 complete (64k)
@@ -152,6 +153,7 @@ MACRO SetBank5WithInterfaceIRQ(QADDR, PADDR)
 	LDQ	QADDR
 	PLP
 ;	End Recover
+	EOM
 ENDMAC
 
 ; Use Bank 5 complete (64k)

@@ -1092,7 +1092,7 @@ _NMI_S
 	STA	NMI_PC + 1	; and save
 	JSR	_SetBank5WithInterfaceIRQ
 	JSR	_NMI_KERNEL
-	JSR	_RESTORE_BANK_IRQ
+	JSR	_RestoreBankIRQ
 	LDA	NMI_PC + 1	; Restore >PC for RTI
 	PHA
 	LDA	NMI_PC 		; Restore <PC for RTI
@@ -1100,7 +1100,6 @@ _NMI_S
 	LDA	NMI_PF		; Restore processor registers
 	PHA
 	LDQ	NMI_QADDR	; Restore A,X,Y,Z
-	EOM			; Release Interrupt Latch
 	RTI
 _RESET_S
 	RTS
@@ -1115,7 +1114,7 @@ _IRQ_KERNEL_S 			; IRQ is disabled from here
 	STA	IRQ_PC + 1	; and save
 	JSR	_SetBank5WithInterfaceIRQ
 	JSR	_IRQ_KERNEL
-	JSR	_RESTORE_BANK_IRQ
+	JSR	_RestoreBankIRQ
 	; Now restore the return address and processor flags to the stack
 	; The RTI will pull them off and return to the interrupted code
 	LDA	IRQ_PC + 1	; Restore >PC for RTI
@@ -1125,8 +1124,6 @@ _IRQ_KERNEL_S 			; IRQ is disabled from here
 	LDA	IRQ_PF		; Restore processor registers
 	PHA
 	LDQ	IRQ_QADDR	; Restore A,X,Y,Z
-	SEI
-	EOM			; Release Interrupt Latch
 	RTI
 
 _SetBank5WithInterface
@@ -1142,25 +1139,23 @@ _SetBank5WithInterfaceIRQ
 	SetBank5WithInterfaceIRQ(S_AXYZI, S_PI)
 	RTS
 
+_SetBank5Only
+	; Return to DOS/65 memory
+	SetBank5Only(S_AXYZ, S_P)
+	RTS
+
 _RETURN_S	; TODO RENAME!
 	SetBank5Only(S_AXYZ, S_P)
 	CLI			; Re-enable IRQs after kernel call
 	RTS
 
-_RESTORE_BANK_IRQ
-	; Decide whether return with or without Interface
-	; We will take the high byte of the IRQ Return address
-	; if bit 7 is set, we return to DOS/65 memory
-	; if bit 7 is clear, we return to Interface memory
-	LDA	IRQ_PC + 1
-	AND	#$80		; Check if DOS/65 memory
-	BEQ	_RESTORE_BANK_IRQ_INTERFACE
+_RestoreBankIRQ
 	; Return to DOS/65 memory
+	; Due to the fact that all kernel calls are made with IRQs 
+	; disabled, we can just restore the bank without worrying 
+	; about interrupts occurring in the middle of the interface 
+	; process.
 	SetBank5OnlyIRQ(S_AXYZI, S_PI)
-	RTS
-_RESTORE_BANK_IRQ_INTERFACE
-	; Return to Interface memory
-	SetBank5WithInterfaceIRQ(S_AXYZI, S_PI)
 	RTS
 
 ; This is called from the c65run after copying
