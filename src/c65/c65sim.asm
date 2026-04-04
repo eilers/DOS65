@@ -180,44 +180,9 @@ wboot	ldx	#$ff		;set stack
 	sta	wbsec		;first record
 	lda	#<ccm
 	ldy	#>ccm
-	sta	wbdma
-	sty	wbdma+1		;first dma address
-;the following uses SIM deblocking
-rdblk	lda	wbtrk		;get track
-	ldy	wbtrk+1
-	jsr	seltrk		;and set
-	lda	wbsec		;get sector
-	ldy	wbsec+1
-	jsr	selsec		;and set
-	lda	wbdma		;get dma address
-	ldy	wbdma+1
-	jsr	setdma		;and set
-	jsr	read		;then do read
-	and	#$ff		;test for error
-	bne	rderr		;if error handle it
-;first see if more
-	dec	count		;drop record count
-	beq	aldon		;done if zero
-;adjust parameters for next record
-;first do dma address
-	clc			;clear carry
-	lda	wbdma		;get buffer address
-	adc	#128		;and raise it
-	sta	wbdma
-	bcc	nodmaw		;skip if no carry
-	inc	wbdma+1		;bump high
-;now do sector but assume records per track = 34
-nodmaw	inc	wbsec		;dump sector
-	lda	wbsec		;get new low
-	cmp	#34		;see if past last
-	bne	rdblk		;if not record OK & track unchanged
-;we now must reset record and increase track
-	lda	#0		;starting record =0 after track 0
-	sta	wbsec		;save it
-	inc	wbtrk		;bump track (0 to 1)
-	bne	rdblk		;loop always
-aldon	lda	sekdsk		;set default drive
-	sta	hstdsk
+	; copy the ccm from interface area into the destination place.
+	JSR	CCM_DMA_COPY
+	; Finished copying the CCM
 	jmp	setup		;go setup
 rderr	jmp	($fffc)		;go to kernel
 ;warm boot variables
@@ -1175,13 +1140,13 @@ COPY_TO_COPY_BUFFER
 	PHA			; Protect the length
 	LDA	#$05		; DMA list exists in Bank 0
 	STA	$D702
-	LDA	#>CPY_DMA
+	LDA	#>CPY_DMA_CTL_DATA
 	STA	$D701
-	LDA	#<CPY_DMA
+	LDA	#<CPY_DMA_CTL_DATA
 	STA	$D700		; Execute copy via DMS
 	PLA			; Restore length
 	RTS
-CPY_DMA
+CPY_DMA_CTL_DATA
 	.byte	$00			; Command low byte: COPY
 CPYLEN	.word	0 			; How many bytes
 CPYSRL	.byte   0			; From address Low
@@ -1191,6 +1156,31 @@ CPYSRH	.byte 	0			; From address High
 	.byte   $00			; Destination Bank
 	.byte	$00			; Command high byte
 	.word   $0000			; Modulo (ignored for COPY)
+
+; Fast copy of CCM from Interface to Bank 5.
+; A: Destination address low
+; Y: Destination address high
+CCM_DMA_COPY
+	JSR	_SetBank5WithInterfaceAndDMA
+	LDA	#$05			; DMA list exists in Bank 5
+	STA	$D702
+	LDA	#>CCM_DMA_COPY_CTL_DATA
+	STA	$D701
+	LDA	#<CCM_DMA_COPY_CTL_DATA
+	STA	$D700			; Execute copy via DMS
+	JSR     _SetBank5Only
+	RTS
+CCM_DMA_COPY_CTL_DATA
+	.byte	$00			; Command low byte: COPY
+	.word	ccmlng 			; How many bytes
+	.byte   <End_Run		; From address Low
+	.byte 	>End_Run		; From address High
+	.byte	$00			; Source Bank
+	.word	ccm	 		; Destination address
+	.byte   $05			; Destination Bank
+	.byte	$00			; Command high byte
+	.word   $0000			; Modulo (ignored for COPY)
+
 
 S_AXYZ	.byte	0,0,0,0	; Save A, X, Y, Z
 S_P	.byte	0	; Save Processor flags

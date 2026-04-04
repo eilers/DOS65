@@ -58,7 +58,6 @@ ASM_FILES = MORE202.ASM \
             RUN207.ASM \
 	    ASM213.ASM 
 #            EDIT205.ASM \
-            ASM213.ASM \
             COMPR204.ASM \
             DEBUG204.ASM \
             DISKC205.ASM \

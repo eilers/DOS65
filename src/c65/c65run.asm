@@ -13,7 +13,6 @@ CR	=	$0D	;carriage return
 	.INCLUDE "kernel.asm"
 	.INCLUDE "macros.asm"
 
-simlng	=	pages*256	;sim length in bytes
 
 ; ZP Adresses for Print
 LTXTSTRT	=	$FB
@@ -71,9 +70,9 @@ basend:	.byte 0,0 	; end of basic
 ; using DMA
 	LDA	#$00		; DMA list exists in Bank 0
 	STA	$D702
-	LDA	#>dmacopy
+	LDA	#>dmacopy_ctl_data
 	STA	$D701
-	LDA	#<dmacopy
+	LDA	#<dmacopy_ctl_data
 	STA	$D700		; Execute copy via DMS
 ; Switch to Bank 5, but keep $2000 - $3FFF 
 	SetBank5WithInterface(S_AXYZ, S_P)
@@ -86,7 +85,7 @@ basend:	.byte 0,0 	; end of basic
 	STX	K_SPL
 	JMP	_INIT_AFTER_LOAD
 ; DMA List to copy code
-dmacopy
+dmacopy_ctl_data
 	.byte	$00			; Command low byte: COPY
 	.word	simlng+pemlng+ccmlng 	; How many bytes
 	.word   End_Run			; From address
@@ -279,7 +278,6 @@ End_Run
 ;-------------------------
 ; Dos/65 System
 ;-------------------------
-	Start_Sys = memlng-simlng-pemlng-ccmlng#
 	*= Start_Sys
 	.STORE Start_Sys,pemlng+ccmlng,"dos65.bin"
 
