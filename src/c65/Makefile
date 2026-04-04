@@ -6,7 +6,7 @@ DISK= disk/dos65_V2.15.D64
 
 .PONY: all clean load xemu distribution
 
-all: $(BSA) $(CTOOLS) c65sim.bin sysgn219.com c65boot.bin c65run.prg # c65loader.prg 
+all: $(BSA) $(CTOOLS) c65sim.bin c65boot.bin c65run.prg # c65loader.prg 
 clean:
 	rm -f *.bin *.lst *.sym *.prg *_map.png *_map.txt disk/*.COM ../*.lst 
 	$(MAKE) -C ../../bsa clean
