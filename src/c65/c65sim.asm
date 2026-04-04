@@ -1101,7 +1101,7 @@ _SetBank5WithInterfaceAndDMA
 	RTS
 
 _SetBank5WithInterfaceIRQ
-	SetBank5WithInterfaceIRQ(S_AXYZI, S_PI)
+	SetBank5WithInterface(S_AXYZI, S_PI)
 	RTS
 
 _SetBank5Only
@@ -1120,7 +1120,7 @@ _RestoreBankIRQ
 	; disabled, we can just restore the bank without worrying 
 	; about interrupts occurring in the middle of the interface 
 	; process.
-	SetBank5OnlyIRQ(S_AXYZI, S_PI)
+	SetBank5Only(S_AXYZI, S_PI)
 	RTS
 
 ; This is called from the c65run after copying

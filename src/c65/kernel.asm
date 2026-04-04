@@ -24,8 +24,8 @@ _NMI_KERNEL	= $22d8
 _IRQ_KERNEL	= $2309
 
 ; Exchange area for preserving interrupt related data
-IRQ_PF	= $fe7b		; Processor flags for IRQ on Bank 5
-NMI_PF	= $fe82		; Processor flags for NMI on Bank 5
+IRQ_PF	= $fe7c		; Processor flags for IRQ on Bank 5
+NMI_PF	= $fe83		; Processor flags for NMI on Bank 5
 
 ; Entrypoints SIM -> Transfer -> Kernel
 _CURSOR                 = $20fb
@@ -44,4 +44,4 @@ _CLALL			= $2294
 ; Interface copy buffer
 COPY_BUFFER             = $2366
 
-_INIT_AFTER_LOAD        = $fe07 ; Cold boot enry after initial load
+_INIT_AFTER_LOAD        = $fe08 ; Cold boot enry after initial load

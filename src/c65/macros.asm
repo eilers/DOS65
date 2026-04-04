@@ -39,32 +39,6 @@ MACRO SetKernalOnly(QADDR, PADDR)
 	EOM
 ENDMAC
 
-; Used to Access the Kernel functions
-; This preserves A, X, Y and the cpu flags without
-; using the stack.
-; But don't use NOP after MAP (not release Interrupt latch)
-MACRO SetKernalOnlyIRQ(QADDR, PADDR)
-; 	Preserve A, X, Y, cpu flags
-	PHP
-	STQ	QADDR
-	PLA
-	STA	PADDR
-;	End preserve
-	; Use MAP command to map in kernel only ($3.E000 - $3.FFFF -> $E000-EFFF)
-	LDA #%00000000
-	LDX #%00000000
-	LDY #%00000000
-	LDZ #%10000011
-	MAP
-; 	Recover A, X, Y, cpu flags
-	LDA	PADDR
-	PHA
-	LDQ	QADDR
-	PLP
-;	End Recover
-	EOM
-ENDMAC
-
 ; Use Bank 5 complete (64k)
 MACRO SetBank5Only(QADDR, PADDR)
 ; 	Preserve A, X, Y, cpu flags
@@ -130,50 +104,4 @@ MACRO SetBank5WithInterfaceAndDMA(QADDR, PADDR)
 	PLP
 ;	End Recover
 	EOM
-ENDMAC
-
-
-; Use Bank 5 but keep $0.2000-$0.3FFF for interface code
-; But don't use NOP after MAP (not release Interrupt latch)
-MACRO SetBank5WithInterfaceIRQ(QADDR, PADDR)
-; 	Preserve A, X, Y, cpu flags
-	PHP
-	STQ	QADDR
-	PLA
-	STA	PADDR
-;	End preserve
-	LDA #%00000000
-	LDX #%11010101  ; Access $2000 - $3FFF
-	LDY #%00000000
-	LDZ #%11110101
-	MAP
-; 	Recover A, X, Y, cpu flags
-	LDA	PADDR
-	PHA
-	LDQ	QADDR
-	PLP
-;	End Recover
-	EOM
-ENDMAC
-
-; Use Bank 5 complete (64k)
-; But don't user NOP after MAP (not release Interrupt latch)
-MACRO SetBank5OnlyIRQ(QADDR, PADDR)
-; 	Preserve A, X, Y, cpu flags
-	PHP
-	STQ	QADDR
-	PLA
-	STA	PADDR
-;	End preserve
-	LDA #%00000000
-	LDX #%11110101
-	LDY #%00000000
-	LDZ #%11110101
-	MAP
-; 	Recover A, X, Y, cpu flags
-	LDA	PADDR
-	PHA
-	LDQ	QADDR
-	PLP
-;	End Recover
 ENDMAC

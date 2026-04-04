@@ -231,7 +231,7 @@ _RESET
 _NMI_KERNEL
 	LDA	NMI_PF		; Load original NMI processor flags from Bank 5
 	STA	S_P		; Store in save area on Bank 0
-	SetKernalOnlyIRQ(S_AXYZI, S_PI)
+	SetKernalOnly(S_AXYZI, S_PI)
 	; Set new return address to our IRQ handler
 	LDA	#>_RET_NMI
 	PHA
@@ -246,7 +246,7 @@ _NMI_KERNEL
 _IRQ_KERNEL
 	LDA	IRQ_PF		; Load original IRQ processor flags from Bank 5
 	STA	S_P		; Store in save area on Bank 0
-	SetKernalOnlyIRQ(S_AXYZI, S_PI)
+	SetKernalOnly(S_AXYZI, S_PI)
 	; Set new return address to our IRQ handler
 	LDA	#>_RETURN_IRQ
 	PHA
@@ -262,7 +262,7 @@ _RET_NMI
 	; The RTI will disable IRQs
 	SEI 	; No IRQs while we are executing an NMI
 _RETURN_IRQ 
-	SetBank5WithInterfaceIRQ(S_AXYZI, S_PI)	
+	SetBank5WithInterface(S_AXYZI, S_PI)	
 	RTS
 
 K_SPH	.byte	0	; Kernel: Stack pointer high
