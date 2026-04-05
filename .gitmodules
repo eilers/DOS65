@@ -4,3 +4,6 @@
 [submodule "ctools"]
 	path = ctools
 	url = https://github.com/mist64/ctools
+[submodule "cc1541"]
+	path = cc1541
+	url = https://bitbucket.org/ptv_claus/cc1541.git

@@ -2,15 +2,21 @@
 BSA= ../../bsa/bsa
 CTOOLS= ../../ctools/src/ctools
 CFORMAT= ../../ctools/src/cformat
+CC1541= ../../cc1541/cc1541
+MERGER= ../../scripts/merge_d64.py
+
+CPM_DISK= disk/dos65_cpm.d64
+C64_DISK= disk/dos65_c64.d64
 DISK= disk/dos65_V2.15.D64
 
 .PONY: all clean load xemu distribution
 
-all: $(BSA) $(CTOOLS) c65sim.bin c65boot.bin c65run.prg # c65loader.prg 
+all: $(BSA) $(CTOOLS) $(CC1541) c65sim.bin c65boot.bin c65run.prg # c65loader.prg 
 clean:
-	rm -f *.bin *.lst *.sym *.prg *_map.png *_map.txt disk/*.COM ../*.lst 
+	rm -f *.bin *.lst *.sym *.prg *_map.png *_map.txt disk/*.COM disk/*.C65 ../*.lst 
 	$(MAKE) -C ../../bsa clean
 	$(MAKE) -C ../../ctools/src clean
+	$(MAKE) -C ../../cc1541 clean
 
 load:	all
 	/Applications/m65tools/m65.osx -l /dev/cu.usbserial-1101 c65run.prg
@@ -25,6 +31,9 @@ $(BSA): ../../bsa/bsa.c
 
 $(CTOOLS):
 	$(MAKE) -C ../../ctools/src
+
+$(CC1541):
+	$(MAKE) -C ../../cc1541
 
 pem.bin: ../pem.asm
 	$(BSA) ../pem.asm
@@ -58,7 +67,7 @@ ASM_FILES = MORE202.ASM \
             RUN207.ASM \
 	    ASM213.ASM 
 #            EDIT205.ASM \
-            COMPR204.ASM \
+#            COMPR204.ASM \
             DEBUG204.ASM \
             DISKC205.ASM \
             DUMP100.ASM \
@@ -76,10 +85,18 @@ COM_FILES = $(ASM_FILES:.ASM=.COM)
 	mkdir -p disk
 	$(BSA) -i ../$*.ASM
 
-distribution: all $(COM_FILES)
+$(CPM_DISK): all $(COM_FILES)
 	mkdir -p disk
-	rm $(DISK)
-	$(CFORMAT) -0 $(DISK)
-	$(CTOOLS) $(DISK) p disk/*.COM 
-	$(CTOOLS) $(DISK) p ../basic/*.BAS 
-	#$(CTOOLS) $(DISK) p ../RUN207.ASM
+	rm -f $(CPM_DISK)
+	$(CFORMAT) -0 $(CPM_DISK)
+	$(CTOOLS) $(CPM_DISK) p disk/*.COM
+	$(CTOOLS) $(CPM_DISK) p ../basic/*.BAS
+
+$(C64_DISK): all
+	mkdir -p disk
+	rm -f $(C64_DISK)
+	cp c65run.prg disk/AUTOBOOT.C65
+	$(CC1541) -n "DOS65 V2.15" -T PRG -w disk/autoboot.c65 $(C64_DISK)
+
+distribution: $(CPM_DISK) $(C64_DISK) $(MERGER)
+	python3 $(MERGER) --c64 $(C64_DISK) --cpm $(CPM_DISK) --out $(DISK)
