@@ -1,19 +1,25 @@
 #!/usr/bin/env python3
 """
-Merge two D64 images into one hybrid image:
+Merge two D64 images into one hybrid image, with collision detection.
 
-- C64 side:
-  * directory/BAM from the C64 image
-  * all sectors referenced by C64 directory entries
+Overlay source:
+- C64 directory/BAM (track 18)
+- all sectors referenced by C64 directory entries
 
-- CP/M side:
-  * everything else stays from the CP/M image
+Base image:
+- CP/M disk with files already written
 
-This assumes the CP/M formatter/layout leaves the C64-visible sectors
-(track 18 + C64 file chains) available for overlay.
+Collision detection:
+- compare a freshly formatted CP/M image (--cpm-base) with the populated CP/M image (--cpm)
+- any sector that differs is considered used by CP/M
+- if a C64 overlay sector would overwrite such a sector with different bytes, abort
 
 Usage:
-    python3 merge_d64.py --c64 c64_side.d64 --cpm cpm_side.d64 --out hybrid.d64
+    python3 merge_d64.py \
+        --c64 c64_side.d64 \
+        --cpm cpm_side.d64 \
+        --cpm-base cpm_empty.d64 \
+        --out hybrid.d64
 """
 
 from __future__ import annotations
@@ -21,22 +27,25 @@ from __future__ import annotations
 import argparse
 import os
 import sys
-from typing import List, Set, Tuple
+from typing import Dict, Iterable, List, Set, Tuple
 
 SECTOR_SIZE = 256
 
-# Standard 35-track D64 layout
 SECTORS_PER_TRACK: List[int] = (
-    [0] +                 # dummy for 1-based track indexing
-    [21] * 17 +           # tracks 1-17
-    [19] * 7 +            # tracks 18-24
-    [18] * 6 +            # tracks 25-30
-    [17] * 5              # tracks 31-35
+    [0] +
+    [21] * 17 +
+    [19] * 7 +
+    [18] * 6 +
+    [17] * 5
 )
 
 TOTAL_TRACKS = 35
 TOTAL_SECTORS = sum(SECTORS_PER_TRACK[1:])
 D64_SIZE = TOTAL_SECTORS * SECTOR_SIZE
+
+
+class MergeError(Exception):
+    pass
 
 
 def ts_to_index(track: int, sector: int) -> int:
@@ -73,21 +82,19 @@ def validate_d64(path: str) -> None:
         )
 
 
-def iter_directory_entries(image: bytes):
-    """
-    Iterate all active directory entries.
+def all_ts() -> Iterable[Tuple[int, int]]:
+    for track in range(1, TOTAL_TRACKS + 1):
+        for sector in range(SECTORS_PER_TRACK[track]):
+            yield (track, sector)
 
-    Directory starts at 18/1 and is chained sector-by-sector:
-      byte 0 = next dir track
-      byte 1 = next dir sector
-      entries from offset 2, every 32 bytes
-    """
+
+def iter_directory_entries(image: bytes):
     visited: Set[Tuple[int, int]] = set()
     track, sector = 18, 1
 
     while track != 0:
         if (track, sector) in visited:
-            raise RuntimeError(f"directory loop detected at {track}/{sector}")
+            raise MergeError(f"directory loop detected at {track}/{sector}")
         visited.add((track, sector))
 
         sec = read_sector(image, track, sector)
@@ -158,37 +165,100 @@ def collect_track_18() -> Set[Tuple[int, int]]:
     return {(18, s) for s in range(SECTORS_PER_TRACK[18])}
 
 
-def merge_images(c64_image: bytes, cpm_image: bytes) -> Tuple[bytearray, Set[Tuple[int, int]]]:
+def collect_c64_overlay_sectors(c64_image: bytes) -> Set[Tuple[int, int]]:
+    sectors = set()
+    sectors |= collect_track_18()
+    sectors |= collect_c64_file_sectors(c64_image)
+    return sectors
+
+
+def collect_cpm_used_sectors(cpm_base: bytes, cpm_populated: bytes) -> Set[Tuple[int, int]]:
+    """
+    Conservative CP/M allocation detection:
+    every sector whose bytes changed after files were copied to the CP/M disk
+    is considered used by CP/M content.
+    """
+    used: Set[Tuple[int, int]] = set()
+
+    for track, sector in all_ts():
+        base_sec = read_sector(cpm_base, track, sector)
+        pop_sec = read_sector(cpm_populated, track, sector)
+        if base_sec != pop_sec:
+            used.add((track, sector))
+
+    return used
+
+
+def detect_collisions(
+    c64_image: bytes,
+    cpm_image: bytes,
+    cpm_base: bytes,
+    overlay_sectors: Set[Tuple[int, int]],
+) -> List[Tuple[int, int]]:
+    cpm_used = collect_cpm_used_sectors(cpm_base, cpm_image)
+    collisions: List[Tuple[int, int]] = []
+
+    for track, sector in sorted(overlay_sectors):
+        if (track, sector) not in cpm_used:
+            continue
+
+        c64_sec = read_sector(c64_image, track, sector)
+        cpm_sec = read_sector(cpm_image, track, sector)
+
+        if c64_sec != cpm_sec:
+            collisions.append((track, sector))
+
+    return collisions
+
+
+def merge_images(
+    c64_image: bytes,
+    cpm_image: bytes,
+    cpm_base: bytes,
+) -> Tuple[bytearray, Set[Tuple[int, int]]]:
     out = bytearray(cpm_image)
 
-    sectors_to_overlay = set()
-    sectors_to_overlay |= collect_track_18()
-    sectors_to_overlay |= collect_c64_file_sectors(c64_image)
+    overlay_sectors = collect_c64_overlay_sectors(c64_image)
+    collisions = detect_collisions(c64_image, cpm_image, cpm_base, overlay_sectors)
 
-    for track, sector in sorted(sectors_to_overlay):
+    if collisions:
+        lines = ", ".join(f"{t}/{s}" for t, s in collisions[:32])
+        more = ""
+        if len(collisions) > 32:
+            more = f" ... (+{len(collisions) - 32} more)"
+        raise MergeError(
+            "C64 boot disk would overwrite CP/M program data in sectors: "
+            f"{lines}{more}"
+        )
+
+    for track, sector in sorted(overlay_sectors):
         sec = read_sector(c64_image, track, sector)
         write_sector(out, track, sector, sec)
 
-    return out, sectors_to_overlay
+    return out, overlay_sectors
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Merge C64 and CP/M D64 images")
     parser.add_argument("--c64", required=True, help="D64 image containing the C64 boot/program side")
-    parser.add_argument("--cpm", required=True, help="D64 image containing the CP/M side")
-    parser.add_argument("--out", required=True, help="Output merged D64 image")
+    parser.add_argument("--cpm", required=True, help="D64 image containing the populated CP/M side")
+    parser.add_argument("--cpm-base", required=True, help="freshly formatted empty CP/M D64 used for collision detection")
+    parser.add_argument("--out", required=True, help="output merged D64 image")
     args = parser.parse_args()
 
     try:
         validate_d64(args.c64)
         validate_d64(args.cpm)
+        validate_d64(args.cpm_base)
 
         with open(args.c64, "rb") as f:
             c64_image = f.read()
         with open(args.cpm, "rb") as f:
             cpm_image = f.read()
+        with open(args.cpm_base, "rb") as f:
+            cpm_base = f.read()
 
-        merged, overlaid = merge_images(c64_image, cpm_image)
+        merged, overlaid = merge_images(c64_image, cpm_image, cpm_base)
 
         with open(args.out, "wb") as f:
             f.write(merged)

@@ -5,6 +5,7 @@ CFORMAT= ../../ctools/src/cformat
 CC1541= ../../cc1541/cc1541
 MERGER= ../../scripts/merge_d64.py
 
+CPM_BASE_DISK= disk/dos65_cpm_base.d64
 CPM_DISK= disk/dos65_cpm.d64
 C64_DISK= disk/dos65_c64.d64
 DISK= disk/dos65_V2.15.D64
@@ -14,6 +15,7 @@ DISK= disk/dos65_V2.15.D64
 all: $(BSA) $(CTOOLS) $(CC1541) c65sim.bin c65boot.bin c65run.prg # c65loader.prg 
 clean:
 	rm -f *.bin *.lst *.sym *.prg *_map.png *_map.txt disk/*.COM disk/*.C65 ../*.lst 
+	rm -f $(DISK) $(CPM_BASE_DISK) $(CPM_DISK) $(C64_DISK)
 	$(MAKE) -C ../../bsa clean
 	$(MAKE) -C ../../ctools/src clean
 	$(MAKE) -C ../../cc1541 clean
@@ -85,12 +87,16 @@ COM_FILES = $(ASM_FILES:.ASM=.COM)
 	mkdir -p disk
 	$(BSA) -i ../$*.ASM
 
-$(CPM_DISK): all $(COM_FILES)
+$(CPM_BASE_DISK): all
 	mkdir -p disk
-	rm -f $(CPM_DISK)
-	$(CFORMAT) -0 $(CPM_DISK)
+	rm -f $(CPM_BASE_DISK)
+	$(CFORMAT) -0 $(CPM_BASE_DISK)
+
+$(CPM_DISK): $(CPM_BASE_DISK) all $(COM_FILES)
+	cp $(CPM_BASE_DISK) $(CPM_DISK)
 	$(CTOOLS) $(CPM_DISK) p disk/*.COM
 	$(CTOOLS) $(CPM_DISK) p ../basic/*.BAS
+	#$(CTOOLS) $(CPM_DISK) p ../RUN207.ASM
 
 $(C64_DISK): all
 	mkdir -p disk
@@ -98,5 +104,5 @@ $(C64_DISK): all
 	cp c65run.prg disk/AUTOBOOT.C65
 	$(CC1541) -n "dos/65 v2.15" -T PRG -w disk/autoboot.c65 $(C64_DISK)
 
-distribution: $(CPM_DISK) $(C64_DISK) $(MERGER)
-	python3 $(MERGER) --c64 $(C64_DISK) --cpm $(CPM_DISK) --out $(DISK)
+distribution: $(CPM_BASE_DISK) $(CPM_DISK) $(C64_DISK) $(MERGER)
+	python3 $(MERGER) --c64 $(C64_DISK) --cpm $(CPM_DISK) --cpm-base $(CPM_BASE_DISK)  --out $(DISK)
