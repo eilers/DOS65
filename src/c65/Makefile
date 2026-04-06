@@ -9,7 +9,7 @@ CPM_DISK= disk/dos65_cpm.d64
 C64_DISK= disk/dos65_c64.d64
 DISK= disk/dos65_V2.15.D64
 
-.PONY: all clean load xemu distribution
+.PHONY: all clean load xemu distribution
 
 all: $(BSA) $(CTOOLS) $(CC1541) c65sim.bin c65boot.bin c65run.prg # c65loader.prg 
 clean:
