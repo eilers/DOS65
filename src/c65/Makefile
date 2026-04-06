@@ -96,7 +96,7 @@ $(C64_DISK): all
 	mkdir -p disk
 	rm -f $(C64_DISK)
 	cp c65run.prg disk/AUTOBOOT.C65
-	$(CC1541) -n "DOS65 V2.15" -T PRG -w disk/autoboot.c65 $(C64_DISK)
+	$(CC1541) -n "dos/65 v2.15" -T PRG -w disk/autoboot.c65 $(C64_DISK)
 
 distribution: $(CPM_DISK) $(C64_DISK) $(MERGER)
 	python3 $(MERGER) --c64 $(C64_DISK) --cpm $(CPM_DISK) --out $(DISK)

@@ -1,10 +1,8 @@
 ;dos/65 system interface module (sim)
-;for C64 and SYSGEN 2.15
-;version 3.04
-;based on my S-100 6502 SIM 3.01 and both BIOS65.ASM & BIOS80.ASM
-;as well as C64S302.ASM.
-;for the C64 CP/M cartridge.
-;released:	5 april 2008
+;for C65 (Mega65)
+;version 1.0
+;based on SIM 3.04 for the C64, written by Richard A. Leary.
+;released:	4 april 2026
 ;last revision:
 ;	5 april 2008
 ;		corrected linefeed character
@@ -35,6 +33,8 @@
 ;		added quote mode control to conout
 ;	9 april 2008
 ;		added blank dcb table entries for drives 2-7 (c-h)
+; 	4 april 2026
+;		ported to the C65 (Mega65) by Stefan Eilers
 
 .CPU  45GS02 
 
@@ -123,8 +123,8 @@ sysdef	.byte	8		;backspace
 ;bit 7 =
 iotype	.byte	1
 ;opening id message
-opnmsg	.byte	cr,lf,"Mega65 60K DOS/65 2.15 "
-	.byte	"SIM 3.04",0
+opnmsg	.byte	cr,lf,"Mega65 60K DOS/65 2.19 "
+	.byte	"SIM 1.00",0
 ;cold entry from loader
 boot
 ;first clear all files and channels
@@ -1157,9 +1157,11 @@ CPYSRH	.byte 	0			; From address High
 	.byte	$00			; Command high byte
 	.word   $0000			; Modulo (ignored for COPY)
 
-; Fast copy of CCM from Interface to Bank 5.
-; A: Destination address low
-; Y: Destination address high
+; Fast copy of CCM from interface area to bank 5.
+; The CCM will be overwritten by transient code and therefore must
+; be recreated after execution by the warm boot sequence.
+; We still have the code stored in the initial interface area
+; beginning at $0.2001 and threfore can just copy it back.
 CCM_DMA_COPY
 	JSR	_SetBank5WithInterfaceAndDMA
 	LDA	#$05			; DMA list exists in Bank 5

@@ -163,8 +163,7 @@ NLTXT   .byte	CR,0
 ;============= Interface Code =================
 ; Entry Point for SIM to access into the kernel
 ; This is called with Bank 5 pulled in. Only $2000 - $3FFF is
-; from Bank 0
-; TODO: Check that SP is unchanged after Kernel call!
+; Bank 0
 _CURSOR
 	SetKernalOnly(S_AXYZ, S_P)
 	JSR	CURSOR		; IN: C; OUT: None	
@@ -186,7 +185,7 @@ _SETNAM
 	LDY	#>COPY_BUFFER
 	JSR	SETNAM		; IN: A, X, Y; OUT: None	
 	JMP	_RETURN
-_OPEN	; TODO: Ensure that C stays alive..
+_OPEN	
 	SetKernalOnly(S_AXYZ, S_P)
 	JSR	OPEN		; IN: -; OUT: A, C
 	JMP	_RETURN
