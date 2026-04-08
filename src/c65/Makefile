@@ -67,8 +67,8 @@ ASM_FILES = MORE202.ASM \
             BASIC202.ASM \
             COMPL205.ASM \
             RUN207.ASM \
-	    ASM213.ASM 
-#            EDIT205.ASM \
+	    ASM213.ASM \
+            EDIT205.ASM
 #            COMPR204.ASM \
             ALLOC208.ASM \
             DEBUG204.ASM \

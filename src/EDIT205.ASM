@@ -121,6 +121,9 @@ outflg				;output ok if < 128
 dfldrv				;default drive
 	*=	*+1
 lastzp
+
+	.STORE TEA,ENDE-TEA,"disk/EDIT.COM"
+
 ;-------------------------------
 ;main program
 ;-------------------------------
@@ -223,8 +226,8 @@ noatds	dec	dstdrv		;drop in either case
 ;initialize files
 	jsr	intxlb		;initialize x$$$$$$$.lib
 ;rentry for re-edit of file
-rentry	lda	#source+srclng*256/256	;set
-	ldy	#source+srclng/256	;source
+rentry	lda	#<(source+srclng)	;set
+	ldy	#>(source+srclng)	;source
 	sta	srcind		;index to
 	sty	srcind+1	;illegal
 	lda	#<dest		;set
@@ -294,8 +297,8 @@ dntddd	lda	#<dlrstr	;change
 	jmp	dlxlex		;else exit
 	lda	#lf		;insert a lf
 	sta	txtbuf		;at start of buffer
-	lda	#txtbuf+1*256/256	;initialize
-	ldy	#txtbuf+1/256	;next
+	lda	#<(txtbuf+1)	;initialize
+	ldy	#>(txtbuf+1)	;next
 	sta	nxttxt		;pointer to
 	sty	nxttxt+1	;start + 1
 	lda	maxtxt		;set upper
@@ -412,10 +415,10 @@ dorpt	jsr	clear		;clear line
 ntrtdl	cmp	#delete		;if not delete
 	bne	notdlt		;try next
 	jsr	dobs		;wipe out the delete
-dlt	lda	#txtbuf+1*256/256	;if
+dlt	lda	#<(txtbuf+1)	;if
 	cmp	nxttxt		;not
 	bne	dltok		;at
-	lda	#txtbuf+1/256	;beginning
+	lda	#>(txtbuf+1)	;beginning
 	cmp	nxttxt+1	;is
 	bne	dltok		;ok
 	jsr	clear		;clear line
@@ -562,8 +565,8 @@ gotnum	jsr	tstnm0		;test for zero
 	lda	prmsgn		;get sign
 	eor	#$ff		;complement it
 	sta	prmsgn		;and save
-	lda	#txtbuf+1*256/256	;set
-	ldy	#txtbuf+1/256	;lower
+	lda	#<(txtbuf+1)	;set
+	ldy	#>(txtbuf+1)	;lower
 	sta	lwrlmt		;limit
 	sty	lwrlmt+1	;to start
 	lda	maxtxt		;and
@@ -1034,9 +1037,9 @@ tsnxlw	lda	lwrlmt		;compare next
 	rts			;accordingly
 ;get next byte from source
 getsrc	lda	srcind		;compare
-	cmp	#source+srclng*256/256	;pointer
+	cmp	#<(source+srclng)	;pointer
 	lda	srcind+1	;to
-	sbc	#source+srclng/256	;maximum
+	sbc	#>(source+srclng)	;maximum
 	bcc	*+5		;use if less
 	jsr	rdesrc		;else read more
 	ldy	#0		;clear index
@@ -1322,10 +1325,10 @@ wrtdlp	lda	dstind		;then
 	jmp	cldind		;else set index
 ;put byte in destination buffer
 putdst	ldx	dstind		;if low
-	cpx	#dest+dstlng*256/256	;not at max
+	cpx	#<(dest+dstlng)	;not at max
 	bne	nodswr		;then ok
 	ldx	dstind+1	;or if high
-	cpx	#dest+dstlng/256	;not at max
+	cpx	#>(dest+dstlng)	;not at max
 	bne	nodswr		;is also ok
 	pha			;save char
 	jsr	wrtdst		;write buffer
@@ -1488,12 +1491,12 @@ chrlmt	bit	prmsgn		;test sign
 	sta	lwrlmt+1	;and save
 	bcc	chtosm		;jump if borrow
 	lda	lwrlmt		;if result
-	cmp	#txtbuf+1*256/256	;is
+	cmp	#<(txtbuf+1)	;is
 	lda	lwrlmt+1	;txtbuf+1
-	sbc	#txtbuf+1/256	;or more
+	sbc	#>(txtbuf+1)	;or more
 	bcs	usclpt		;use it
-chtosm	lda	#txtbuf+1*256/256	;else
-	ldy	#txtbuf+1/256	;use
+chtosm	lda	#<(txtbuf+1)	;else
+	ldy	#>(txtbuf+1)	;use
 	sta	lwrlmt		;txtbuf+1
 	sty	lwrlmt+1	;as lower limit
 usclpt	rts
@@ -1614,8 +1617,8 @@ lmtmne	lda	lwrlmt		;drop
 ; if n=0 then n <-- 1
 write	lda	#minus		;set sign
 	sta	prmsgn		;to minus
-	lda	#txtbuf+1*256/256	;then set
-	ldy	#txtbuf+1/256	;pointer
+	lda	#<(txtbuf+1)	;then set
+	ldy	#>(txtbuf+1)	;pointer
 	sta	lwrlmt		;for
 	sty	lwrlmt+1	;move
 	lda	uprtxt		;to beginning
@@ -1851,3 +1854,4 @@ dest
 ;text buffer
 txtbuf
 	.end
+ENDE
