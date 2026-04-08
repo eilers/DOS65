@@ -72,6 +72,9 @@ line				;line count
 	*=	*+1
 scrlin				;screen line
 	*=	*+1
+
+	.STORE TEA,ENDE-TEA,"disk/ALLOC.COM"
+
 ;main program
 	*=	TEA
 ;send opening message including version followed by cr & lf
@@ -332,4 +335,4 @@ nxtmsg	.byte	cr,lf,"PRESS SPACE BAR TO SEE NEXT PAGE$"
 clsmsg	.byte	"K BLOCKS FREE OF $"
 ttlmsg	.byte	" TOTAL$"
 	.END
-
+ENDE

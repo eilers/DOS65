@@ -69,9 +69,9 @@ ASM_FILES = MORE202.ASM \
             RUN207.ASM \
 	    ASM213.ASM \
             EDIT205.ASM \
-            COMPR204.ASM
-#            ALLOC208.ASM \
-            DEBUG204.ASM \
+            COMPR204.ASM  \
+            ALLOC208.ASM
+            #DEBUG204.ASM \
             DISKC205.ASM \
             DUMP100.ASM \
             MON1002.ASM \
