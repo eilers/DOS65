@@ -41,7 +41,7 @@ _BSOUT                  = $224c
 _GETIN			= $2270
 _CLALL			= $2294
 
-; Interface copy buffer
+; Bridge copy buffer
 COPY_BUFFER             = $2366
 
 _INIT_AFTER_LOAD        = $fe08 ; Cold boot enry after initial load

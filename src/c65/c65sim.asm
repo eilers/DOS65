@@ -180,7 +180,7 @@ wboot	ldx	#$ff		;set stack
 	sta	wbsec		;first record
 	lda	#<ccm
 	ldy	#>ccm
-	; copy the ccm from interface area into the destination place.
+	; copy the ccm from bridge area into the destination place.
 	JSR	CCM_DMA_COPY
 	; Finished copying the CCM
 	jmp	setup		;go setup
@@ -997,53 +997,53 @@ hstbuf
 
 ; Code to switch to Kernel
 _CURSOR_S
-	JSR	_SetBank5WithInterface
+	JSR	_SetBank5WithBridge
 	JSR	_CURSOR
 	JMP	_RETURN_S
 _SETLFS_S
-	JSR	_SetBank5WithInterface
+	JSR	_SetBank5WithBridge
 	JSR	_SETLFS
 	JMP	_RETURN_S
 _SETNAM_S
-	JSR	_SetBank5WithInterfaceAndDMA
+	JSR	_SetBank5WithBridgeAndDMA
 	JSR	COPY_TO_COPY_BUFFER
-	JSR	_SetBank5WithInterface
+	JSR	_SetBank5WithBridge
 	JSR 	_SETNAM
 	JMP	_RETURN_S
 _OPEN_S
-	JSR	_SetBank5WithInterface
+	JSR	_SetBank5WithBridge
 	JSR	_OPEN
 	JMP	_RETURN_S
 _CLOSE_S
-	JSR	_SetBank5WithInterface
+	JSR	_SetBank5WithBridge
 	JSR	_CLOSE
 	JMP	_RETURN_S
 _CHKIN_S
-	JSR	_SetBank5WithInterface
+	JSR	_SetBank5WithBridge
 	JSR	_CHKIN
 	JMP	_RETURN_S
 _CKOUT_S
-	JSR	_SetBank5WithInterface
+	JSR	_SetBank5WithBridge
 	JSR	_CKOUT
 	JMP	_RETURN_S
 _CLRCH_S
-	JSR	_SetBank5WithInterface
+	JSR	_SetBank5WithBridge
 	JSR	_CLRCH
 	JMP	_RETURN_S
 _BASIN_S
-	JSR	_SetBank5WithInterface
+	JSR	_SetBank5WithBridge
 	JSR	_BASIN
 	JMP	_RETURN_S
 _BSOUT_S
-	JSR	_SetBank5WithInterface
+	JSR	_SetBank5WithBridge
 	JSR	_BSOUT
 	JMP	_RETURN_S
 _GETIN_S
-	JSR	_SetBank5WithInterface
+	JSR	_SetBank5WithBridge
 	JSR	_GETIN
 	JMP	_RETURN_S
 _CLALL_S
-	JSR	_SetBank5WithInterface
+	JSR	_SetBank5WithBridge
 	JSR	_CLALL
 	JMP	_RETURN_S
 _NMI_S
@@ -1055,7 +1055,7 @@ _NMI_S
 	STA	NMI_PC 		; and save
 	PLA			; Pull >PC for RTI
 	STA	NMI_PC + 1	; and save
-	JSR	_SetBank5WithInterfaceIRQ
+	JSR	_SetBank5WithBridgeIRQ
 	JSR	_NMI_KERNEL
 	JSR	_RestoreBankIRQ
 	LDA	NMI_PC + 1	; Restore >PC for RTI
@@ -1077,7 +1077,7 @@ _IRQ_KERNEL_S 			; IRQ is disabled from here
 	STA	IRQ_PC 		; and save
 	PLA			; Pull >PC for RTI
 	STA	IRQ_PC + 1	; and save
-	JSR	_SetBank5WithInterfaceIRQ
+	JSR	_SetBank5WithBridgeIRQ
 	JSR	_IRQ_KERNEL
 	JSR	_RestoreBankIRQ
 	; Now restore the return address and processor flags to the stack
@@ -1091,17 +1091,17 @@ _IRQ_KERNEL_S 			; IRQ is disabled from here
 	LDQ	IRQ_QADDR	; Restore A,X,Y,Z
 	RTI
 
-_SetBank5WithInterface
+_SetBank5WithBridge
 	SEI			; Disable IRQ while kernel call
-	SetBank5WithInterface(S_AXYZ, S_P)
+	SetBank5WithBridge(S_AXYZ, S_P)
 	RTS
 
-_SetBank5WithInterfaceAndDMA
-	SetBank5WithInterfaceAndDMA(S_AXYZ, S_P)
+_SetBank5WithBridgeAndDMA
+	SetBank5WithBridgeAndDMA(S_AXYZ, S_P)
 	RTS
 
-_SetBank5WithInterfaceIRQ
-	SetBank5WithInterface(S_AXYZI, S_PI)
+_SetBank5WithBridgeIRQ
+	SetBank5WithBridge(S_AXYZI, S_PI)
 	RTS
 
 _SetBank5Only
@@ -1118,7 +1118,7 @@ _RestoreBankIRQ
 	; Return to DOS/65 memory
 	; Due to the fact that all kernel calls are made with IRQs 
 	; disabled, we can just restore the bank without worrying 
-	; about interrupts occurring in the middle of the interface 
+	; about interrupts occurring in the middle of the bridging 
 	; process.
 	SetBank5Only(S_AXYZI, S_PI)
 	RTS
@@ -1157,13 +1157,13 @@ CPYSRH	.byte 	0			; From address High
 	.byte	$00			; Command high byte
 	.word   $0000			; Modulo (ignored for COPY)
 
-; Fast copy of CCM from interface area to bank 5.
+; Fast copy of CCM from bridge area to bank 5.
 ; The CCM will be overwritten by transient code and therefore must
 ; be recreated after execution by the warm boot sequence.
-; We still have the code stored in the initial interface area
+; We still have the code stored in the initial bridge area
 ; beginning at $0.2001 and threfore can just copy it back.
 CCM_DMA_COPY
-	JSR	_SetBank5WithInterfaceAndDMA
+	JSR	_SetBank5WithBridgeAndDMA
 	LDA	#$05			; DMA list exists in Bank 5
 	STA	$D702
 	LDA	#>CCM_DMA_COPY_CTL_DATA
@@ -1197,7 +1197,9 @@ NMI_QADDR .byte	0,0,0,0	; Stores A,X,Y,Z for NMI
 
 ; --------------------------------------
 ; Mapping of Mega65 Kernel calls to 
-; interface calls
+; bridge calls. These bridge calls will 
+; switch to the kernel, execute the desired 
+; call, and then switch back to the sim.
 ; --------------------------------------
 	*= CURSOR
 	JMP	_CURSOR_S

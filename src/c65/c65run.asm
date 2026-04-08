@@ -75,7 +75,7 @@ basend:	.byte 0,0 	; end of basic
 	LDA	#<dmacopy_ctl_data
 	STA	$D700		; Execute copy via DMS
 ; Switch to Bank 5, but keep $2000 - $3FFF 
-	SetBank5WithInterface(S_AXYZ, S_P)
+	SetBank5WithBridge(S_AXYZ, S_P)
 ; Jump indirectly to the cold boot routine
 	; First save current stack pointer
 	; TODO: Check whether necessary.. 
@@ -222,7 +222,7 @@ _CLALL
 	JSR	CLALL		; IN: -; OUT: -
 	JMP	_RETURN
 _RETURN
-	SetBank5WithInterface(S_AXYZ, S_P)	
+	SetBank5WithBridge(S_AXYZ, S_P)	
 	RTS
 
 _RESET
@@ -261,7 +261,7 @@ _RET_NMI
 	; The RTI will disable IRQs
 	SEI 	; No IRQs while we are executing an NMI
 _RETURN_IRQ 
-	SetBank5WithInterface(S_AXYZI, S_PI)	
+	SetBank5WithBridge(S_AXYZI, S_PI)	
 	RTS
 
 K_SPH	.byte	0	; Kernel: Stack pointer high

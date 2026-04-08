@@ -61,8 +61,8 @@ MACRO SetBank5Only(QADDR, PADDR)
 	EOM
 ENDMAC
 
-; Use Bank 5 but keep $0.2000-$0.3FFF for interface code
-MACRO SetBank5WithInterface(QADDR, PADDR)
+; Use Bank 5 but keep $0.2000-$0.3FFF for bridging code
+MACRO SetBank5WithBridge(QADDR, PADDR)
 ; 	Preserve A, X, Y, cpu flags
 	PHP
 	STQ	QADDR
@@ -83,9 +83,9 @@ MACRO SetBank5WithInterface(QADDR, PADDR)
 	EOM
 ENDMAC
 
-; Use Bank 5 but keep $0.2000-$0.3FFF for interface code
+; Use Bank 5 but keep $0.2000-$0.3FFF for bridging code
 ; and $0.D000 for DMA access
-MACRO SetBank5WithInterfaceAndDMA(QADDR, PADDR)
+MACRO SetBank5WithBridgeAndDMA(QADDR, PADDR)
 ; 	Preserve A, X, Y, cpu flags
 	PHP
 	STQ	QADDR
