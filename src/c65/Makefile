@@ -70,10 +70,10 @@ ASM_FILES = MORE202.ASM \
 	    ASM213.ASM \
             EDIT205.ASM \
             COMPR204.ASM  \
-            ALLOC208.ASM
-            #DEBUG204.ASM \
-            DISKC205.ASM \
-            DUMP100.ASM \
+            ALLOC208.ASM \
+            DISKC205.ASM
+            #DUMP100.ASM \
+            DEBUG204.ASM \
             MON1002.ASM \
             PAGE100.ASM \
             HXCOM200.ASM \

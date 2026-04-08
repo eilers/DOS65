@@ -89,6 +89,9 @@ sector				;sector count
 	*=	*+3
 countr				;counter
 	*=	*+1
+
+	.STORE TEA,ENDE-TEA,"disk/DISKCOPY.COM"
+
 ;main program
 	*=	TEA
 ;send opening message
@@ -366,8 +369,8 @@ BMPBUF	CLC			;clear
 BADMSG	LDA	#<CMDER1	;send
 	LDY	#>CMDER1	;first
 	JSR	MSGOUT		;message
-	LDA	#DFLBUF+1*256/256	;then
-	LDY	#DFLBUF+1/256	;send
+	LDA	#<(DFLBUF+1)	;then
+	LDY	#>(DFLBUF+1)	;send
 	JSR	MSGOUT		;input
 	LDA	#<CMDER2	;then
 	LDY	#>CMDER2	;second
@@ -603,3 +606,4 @@ mesgg	.byte	cr,lf,"+NO ROOM TO DO DISK COPY"
 ;buffers
 buf0
 	.END
+ENDE
