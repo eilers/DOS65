@@ -48,6 +48,9 @@ byte1				;byte from file one
 	*=	*+1
 byte2				;byte from file two
 	*=	*+1
+
+	.STORE TEA,ENDE-TEA,"disk/COMPARE.COM"
+
 ;start of main program
 	*=	tea
 	lda	#0		;clear eof flag
@@ -374,3 +377,4 @@ f2buf				;file 2
 	*=	*+buflng
 f2max
 	.end
+ENDE
