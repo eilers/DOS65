@@ -21,7 +21,10 @@ DOS/65 is structured in a modular way. The module that provides the direct human
 The module that must be customized for a given users configuration is the System Interface Module (SIM). This module is also sometimes coupled with ROM resident firmware on some systems called the MONITOR but as far as the rest of the system is concerned the interfaces are all in the hands of SIM.
 
 ## This Distribution
-This Disk includes Version V2.19 which resembles to CP/M 2. Version 3 (which resembles to CP/M 3) needs a port of the SIM, which might be realized in the future.
+[This Disk](https://files.mega65.org?id=ffd575e5-5d9c-47ff-b553-fcec80fd77a3) includes Version V2.19 which resembles to CP/M 2. Version 3 (which resembles to CP/M 3) needs a port of the SIM, which might be realized in the future.
+It was tested with 
+* MEGA65 ROM : V920417 and V920420
+* MEGA65 CORE: 0.97 aaf4542   
 
 The command control module (CCM) knowns the following commands:
 * DIR
