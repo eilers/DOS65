@@ -23,8 +23,16 @@ The module that must be customized for a given users configuration is the System
 ## This Distribution
 This Disk includes Version V2.19 which resembles to CP/M 2. Version 3 (which resembles to CP/M 3) needs a port of the SIM, which might be realized in the future.
 
-This distribution comes as a hybrid D64 image that contains the following software:
+The command control module (CCM) knowns the following commands:
+* DIR
+* REN \<ufn\> \<ufn\>
+* SAVE \<length\> \<drive:\>ufn (\<address\>)
+* ERA \<afn\>
+* TYPE d:ufn
+* LOAD \<ufn\> (\<address\>)
+* GO (\<address\>)
 
+This distribution comes as a hybrid D64 image that contains the following software:
 * Assembler for 6502: 
     * ASM
 * BASIC-E (Naval Postgraduate School Basic) Compiler and Runtime:
