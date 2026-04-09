@@ -20,28 +20,28 @@ RESET_VECT	= $FFFC
 IRQ_VECT	= $FFFE
 
 ; Interrupt Entry points
-_NMI_KERNEL	= $22d8
-_IRQ_KERNEL	= $2309
+_NMI_KERNEL	= $22c9
+_IRQ_KERNEL	= $22f9
 
 ; Exchange area for preserving interrupt related data
-IRQ_PF	= $fe7c		; Processor flags for IRQ on Bank 5
-NMI_PF	= $fe83		; Processor flags for NMI on Bank 5
+IRQ_PF	= $fe77		; Processor flags for IRQ on Bank 5
+NMI_PF	= $fe7e		; Processor flags for NMI on Bank 5
 
 ; Entrypoints SIM -> Transfer -> Kernel
-_CURSOR                 = $20fb
-_SETLFS			= $211f
-_SETNAM			= $2143
-_OPEN			= $2174
-_CLOSE			= $2198
-_CHKIN			= $21bc
-_CKOUT			= $21e0
-_CLRCH			= $2204
-_BASIN			= $2228
-_BSOUT                  = $224c
-_GETIN			= $2270
-_CLALL			= $2294
+_CURSOR                 = $20f9
+_SETLFS			= $211c
+_SETNAM			= $213f
+_OPEN			= $216f
+_CLOSE			= $2192
+_CHKIN			= $21b5
+_CKOUT			= $21d8
+_CLRCH			= $21fb
+_BASIN			= $221e
+_BSOUT                  = $2241
+_GETIN			= $2264
+_CLALL			= $2287
 
 ; Bridge copy buffer
-COPY_BUFFER             = $2366
+COPY_BUFFER             = $2354
 
-_INIT_AFTER_LOAD        = $fe08 ; Cold boot enry after initial load
+_INIT_AFTER_LOAD        = $fe04 ; Cold boot enry after initial load

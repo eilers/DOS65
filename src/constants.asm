@@ -13,7 +13,7 @@ memlng	=	msize*1024	;memory length in bytes
 simlng	=	pages*256	;sim length in bytes
 
 Start_Sys =     memlng-simlng-pemlng-ccmlng
-End_Run =       $23b6           ; End Address of Run program
+End_Run =       $23a4           ; End Address of Run program
 
 ;fixed parameters
 lf	=	$a		;linefeeed

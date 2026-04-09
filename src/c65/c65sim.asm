@@ -1112,6 +1112,7 @@ _SetBank5Only
 _RETURN_S	; TODO RENAME!
 	SetBank5Only(S_AXYZ, S_P)
 	CLI			; Re-enable IRQs after kernel call
+	EOM
 	RTS
 
 _RestoreBankIRQ
@@ -1121,6 +1122,7 @@ _RestoreBankIRQ
 	; about interrupts occurring in the middle of the bridging 
 	; process.
 	SetBank5Only(S_AXYZI, S_PI)
+	EOM
 	RTS
 
 ; This is called from the c65run after copying

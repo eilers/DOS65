@@ -36,7 +36,6 @@ MACRO SetKernalOnly(QADDR, PADDR)
 	LDQ	QADDR
 	PLP
 ;	End Recover
-	EOM
 ENDMAC
 
 ; Use Bank 5 complete (64k)
@@ -58,7 +57,6 @@ MACRO SetBank5Only(QADDR, PADDR)
 	LDQ	QADDR
 	PLP
 ;	End Recover
-	EOM
 ENDMAC
 
 ; Use Bank 5 but keep $0.2000-$0.3FFF for bridging code
@@ -80,7 +78,6 @@ MACRO SetBank5WithBridge(QADDR, PADDR)
 	LDQ	QADDR
 	PLP
 ;	End Recover
-	EOM
 ENDMAC
 
 ; Use Bank 5 but keep $0.2000-$0.3FFF for bridging code
@@ -103,5 +100,4 @@ MACRO SetBank5WithBridgeAndDMA(QADDR, PADDR)
 	LDQ	QADDR
 	PLP
 ;	End Recover
-	EOM
 ENDMAC
