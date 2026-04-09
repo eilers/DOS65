@@ -78,3 +78,5 @@ You find the original documenation in the [docs](./docs) folder.
 
 # Other DOS/65 Repositories
 https://github.com/floobydust/DOS-65-Version-3.21/tree/main/DOS65V321
+
+https://github.com/osiweb/DOS65/tree/master/DOS65_v2.1
