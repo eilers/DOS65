@@ -56,8 +56,6 @@ This distribution comes as a hybrid D64 image that contains the following softwa
     * PAGE
 * Not yet included (Not working for now. Pull requests are welcome!)
     * DEBUG 
-    * MONITOR
-
 
 Please note that SysGen is not supported and therefore not included in this package. Please read [here](https://wiki.eilers-online.net/dos65) why this is the case.
 
@@ -72,9 +70,6 @@ This disk is a hybrid disk that is compatible to the 1541 and can be mounted as 
 Mount the D64 and just enter `boot`. That's it.
 
 You might update your core for the Mega65 if the 1541 emulation is missing.
-
-# Download the latest release
-Please download from [files.mega65.org](https://files.mega65.org?id=ffd575e5-5d9c-47ff-b553-fcec80fd77a3)
 
 # Documentation
 You find the original documenation in the [docs](./docs) folder. 
