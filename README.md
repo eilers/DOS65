@@ -20,13 +20,9 @@ DOS/65 is structured in a modular way. The module that provides the direct human
 
 The module that must be customized for a given users configuration is the System Interface Module (SIM). This module is also sometimes coupled with ROM resident firmware on some systems called the MONITOR but as far as the rest of the system is concerned the interfaces are all in the hands of SIM.
 
-DOS/65 V3.0 is backward-compatible with V2.1. Said another way, V3.0 will execute the V2.1 transients exactly the same as they would be executed under V2.1. The two known exceptions to this rule are the BASIC-E file status program that will not execute correctly under V3.0 and the SD program that must be configured for either V3.0 or V2.1 before it is assembled.
-
-As a consequence the V3.0 releases do not repeat all of the various transients that are released as part of the 2.1. Those transients can all be loaded into a V3.0 system and will run as expected.
-
-One approach to bringing up a new system under V3.0 is to actually bring it up as a V2.1 system and then run SYSGEN for V3.0 on top of V2.1.
-
 ## This Distribution
+This Disk includes Version V2.19 which resembles to CP/M 2. Version 3 (which resembles to CP/M 3) needs a port of the SIM, which might be realized in the future.
+
 This distribution comes as a hybrid D64 image that contains the following software:
 
 * Assembler for 6502: 
@@ -40,14 +36,17 @@ This distribution comes as a hybrid D64 image that contains the following softwa
     * EDIT
 * Other:
     * MORE
-    * SYSTSTAT.BAS
-    * FILESTAT.BAS
-    * ALLOC (print disk allocation)
+    * SYSSTAT (compile with `COMPILE SYST212S`  and execute with `RUN SYST21S` )
+    * FILESTAT (compile with `COMPILE FLST217S` and execute with `RUN FLST217S`)
+    * ALLOC
     * COMPARE
     * DISKCOPY
     * DUMP
     * PAGE
-    * DEBUG (montor program)
+* Not yet included (Not working for now. Pull requests are welcome!)
+    * DEBUG 
+    * MONITOR
+
 
 Please note that SysGen is not supported and therefore not included in this package. Please read [here](https://wiki.eilers-online.net/dos65) why this is the case.
 

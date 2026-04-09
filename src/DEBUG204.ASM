@@ -48,6 +48,9 @@ lf	=	$a		;linefeeed
 cr	=	$d		;return
 eof	=	$1a		;end of file
 semico	=	59		;semicolon
+
+	.STORE TEA,ENDE-TEA,"disk/DEBUG.COM"
+
 ;set-up pointers
 	*=	tea
 	jmp	start		;go start
@@ -1516,5 +1519,5 @@ linmsk	.byte	0		;line end mask for display
 bytpln	.byte	0		;bytes per line for display
 ;align end on page boundary-1
 LAST	=	*/256*256+256-1
-	.END
-	
+	.END	
+ENDE

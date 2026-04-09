@@ -8,7 +8,7 @@ MERGER= ../../scripts/merge_d64.py
 CPM_BASE_DISK= disk/dos65_cpm_base.d64
 CPM_DISK= disk/dos65_cpm.d64
 C64_DISK= disk/dos65_c64.d64
-DISK= disk/dos65_V2.15.D64
+DISK= disk/dos65_V2.19.D64
 
 .PHONY: all clean load xemu distribution
 
@@ -71,11 +71,11 @@ ASM_FILES = MORE202.ASM \
             EDIT205.ASM \
             COMPR204.ASM  \
             ALLOC208.ASM \
-            DISKC205.ASM
-            #DUMP100.ASM \
-            DEBUG204.ASM \
+            DISKC205.ASM \
+            DUMP100.ASM \
+            PAGE100.ASM
+            #DEBUG204.ASM \
             MON1002.ASM \
-            PAGE100.ASM \
             HXCOM200.ASM \
             MKCOM204.ASM \
             SUBMIT.ASM (ONLY 3.x)
