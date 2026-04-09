@@ -30,6 +30,9 @@ chrnum					;character position in line
 	*=	*+1
 linnum					;line counter
 	*=	*+2
+
+	.STORE TEA,ENDE-TEA,"disk/DUMP.COM"
+
 ;start of code section
 *	=	tea
 ;start with sign on message
@@ -180,3 +183,4 @@ signon	.byte	'DOS/65 FILE DUMP V1.00$'
 opnmsg	.byte	cr,lf,'NO INPUT FILE FOUND$'
 ;
 	.end
+ENDE

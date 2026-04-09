@@ -1,11 +1,3 @@
-	module	main
-	heading DOS/65 PAGE V1.00-S 14 Aug 2014
-	inclist	on
-	pw	132
-	pl	59
-	case	off
-	chip	65C02
-	globals	on
 ;********************************************************
 ;*							*
 ;*	    FILE SCREEN PAGING UTILITY			*
@@ -16,41 +8,43 @@
 ;last revision:
 ;
 ;DOS/65 definitions
-pzstrt	equ	2		;start of page zero storage
-WBOOT	EQU	$100		;REBOOT ENTRY POINT
-PEM	EQU	$103		;CPM ENTRY POINT
-TFCB	EQU	$107		;TRANSIENT PROGRAM FCB
-tea	equ	$200		:TEA start
+pzstrt	=	2		;start of page zero storage
+WBOOT	=	$100		;REBOOT ENTRY POINT
+PEM	=	$103		;CPM ENTRY POINT
+TFCB	=	$107		;TRANSIENT PROGRAM FCB
+tea	=	$200		:TEA start
 ;DOS/65 PEM commands
-charout	equ	2		;send character to console
-charin	equ	6		;get input key without echo
-STRING	EQU	9		;STRING PRINT FUNCTION
-STATUS	EQU	11		;CONSOLE STATUS FUNCTION
-OPEN	EQU	15		;OPEN FUNCTION CODE
-READ	EQU	20		;READ FUNCTION CODE
-SetBuf	equ	26		;set buffer address
+charout	=	2		;send character to console
+charin	=	6		;get input key without echo
+STRING	=	9		;STRING PRINT FUNCTION
+STATUS	=	11		;CONSOLE STATUS FUNCTION
+OPEN	=	15		;OPEN FUNCTION CODE
+READ	=	20		;READ FUNCTION CODE
+SetBuf	=	26		;set buffer address
 ;display definitions
-PAGE	EQU	23		;LINES/PAGE
-WIDTH	EQU	79		;CHARACTERS/LINE
+PAGE	=	23		;LINES/PAGE
+WIDTH	=	79		;CHARACTERS/LINE
 ;character definitions
-ctlc	equ	3		;control-c
-TAB	EQU	9		;ASCII TAB
-ALF	EQU	$a		;ASCII LINE FEED
-ACR	EQU	$d		;ASCII CARRIAGE RETURN
-eof	equ	$1a		;end of file
-ESC	EQU	$1b		;ASCII ESCAPE
-SPACE	EQU	$20		;ASCII SPACE
+ctlc	=	3		;control-c
+TAB	=	9		;ASCII TAB
+ALF	=	$a		;ASCII LINE FEED
+ACR	=	$d		;ASCII CARRIAGE RETURN
+eof	=	$1a		;end of file
+ESC	=	$1b		;ASCII ESCAPE
+SPACE	=	$20		;ASCII SPACE
 ;
-	page0
+
 ;page zero variable storage
-	org	pzstrt
-line	defs	1		;screen row
-col	defs	1		;screen column
-bufpos	defs	1		;disk buffer (0-127 valid - 128=wrap)
+	*=	pzstrt
+line	.byte	1		;screen row
+col	.byte	1		;screen column
+bufpos	.byte	1		;disk buffer (0-127 valid - 128=wrap)
 	ends
+
+	.STORE TEA,ENDE-TEA,"disk/PAGE.COM"
 ;
 ;code section
-	ORG	tea
+	*=	tea
 	ldx	#$ff		;set stack so must
 	txs			;exit with warm boot
 	lda	#<opnmsg	;point to welcome message
@@ -91,7 +85,7 @@ notalf	cmp	#TAB		;see if tab
 TABLOOP	lda	#space		;GET A SPACE
 	jsr	FeedDisplay	;DISPLAY IT
 	lda	col		;GET CURRENT COLUMN
-	AND	#00000111b	;MOD 8, AT TAB STOP?
+	AND	#%00000111	;MOD 8, AT TAB STOP?
 	bne	TABLOOP		;NO, ANOTHER SPACE
 	jmp	LOOP
 ;
@@ -153,7 +147,7 @@ FeedDisplay
 	lda	line		;now get line
 	cmp	#page		;see if page end page
 	bne	cont2		;if not OK
-	jsr	keyloop		else wait for response
+	jsr	keyloop		;else wait for response
 cont2	lda	#alf		;then get lf
 	jsr	chartopem	;send it
 	inc	line		;and bump line
@@ -187,7 +181,7 @@ FetchByte:
 	ldy	bufpos		;get index
 	bmi	NextBlock	;if invalid read new block
 	lda	buffer,y	;else get character
-	and	#01111111b	;clear msb in case
+	and	#%01111111	;clear msb in case
 	inc	bufpos		;bump index
 	clc			;clear carry
 	rts			;and return with char
@@ -218,12 +212,13 @@ INERROR	sec			;SET CARRY
 	rts
 ;
 ;messages
-opnmsg	DEFB	'DOS/65 TYPE TEXT FILE BY PAGE V1.00',acr,alf,'$'
-MESSG1	DEFB	acr,alf,'**** File Open Error ****',ACR,ALF,'$'
-MESSG2	DEFB	acr,alf,'**** File Read Error ****',ACR,ALF,'$'
-MESSG4	DEFB	acr,alf,'**** End of Input File Reached ****',acr,alf,'$'
+opnmsg	.byte	'DOS/65 TYPE TEXT FILE BY PAGE V1.00',acr,alf,'$'
+MESSG1	.byte	acr,alf,'**** File Open Error ****',ACR,ALF,'$'
+MESSG2	.byte	acr,alf,'**** File Read Error ****',ACR,ALF,'$'
+MESSG4	.byte	acr,alf,'**** End of Input File Reached ****',acr,alf,'$'
 ;
 ;disk buffer
-buffer	defs	128
+buffer	.byte	128
 ;
 	END
+ENDE
