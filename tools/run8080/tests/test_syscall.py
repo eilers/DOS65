@@ -8,7 +8,7 @@ the 80 by 24 cell grid after the ADM-3A cursor sequences, not the raw bytes.
 import tempfile
 from pathlib import Path
 
-from bench.layout import BASE, FUNC, REASON, REASON_USER, STOPPED
+from bench.layout import BASE, FUNC, REASON, REASON_USER, SCREEN, SCREEN_BYTES, STOPPED
 from bench.sim.cpm import CPMMachine
 from tests.harness import COM, peek, run_loaded
 
@@ -34,7 +34,7 @@ def both(program: bytes, tail: str, *, files=None, script=b"", limit=2_000_000):
 
 
 def screen(machine) -> bytes:
-    return bytes(machine.bank(4)[:80 * 24])
+    return bytes(machine.bank(4)[SCREEN:SCREEN + SCREEN_BYTES])
 
 
 def adm(stream: bytes) -> bytes:
@@ -127,6 +127,7 @@ def test_adm3a_screen_matches_the_cpm_byte_stream():
     assert screen(ours) == adm(bytes(cpm.console.output))
     assert screen(ours)[2 * 80 + 5] == ord("Z")
     assert screen(ours)[0] == 0x20
+    assert not any(ours.bank(4)[:SCREEN])
 
 
 def test_read_buffer():

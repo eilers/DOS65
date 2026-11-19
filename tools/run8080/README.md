@@ -37,7 +37,7 @@ The machine is already at its 40 MHz fast clock, and `run8080` leaves that clock
 
 Bank 0 is left alone. It holds kernel data and the SIM-to-kernel bridge. Banks 2 and 3 are ROM. Bank 5 is DOS/65 itself.
 
-Bank 4's first 8 KB (`$40000`–`$41FFF`) is the 80 by 50 screen. The free 56 KB after it (`$42000`–`$4FFFF`) is the 8080 address range `$0000`–`$DFFF`. A 32-bit pointer's low 16 bits are the 8080 address plus `$2000`, and the high word is `$0004`. The guest's own bytes are read and written with `LDA [pointer],Z` and `STA [pointer],Z`, which do not use the memory map.
+Bank 4's first 8 KB (`$40000`–`$41FFF`) belongs to the MEGA65 ROM; its 80 by 50 text screen starts at `$40800`, and the guest draws on the top 24 rows there. The free 56 KB after it (`$42000`–`$4FFFF`) is the 8080 address range `$0000`–`$DFFF`. A 32-bit pointer's low 16 bits are the 8080 address plus `$2000`, and the high word is `$0004`. The guest's own bytes are read and written with `LDA [pointer],Z` and `STA [pointer],Z`, which do not use the memory map.
 
 8080 `$E000`–`$FFFF` is an 8 KB read-only stub image in Attic RAM at `$8000000`. Address 6 holds `$E000`, so BDOS appears to start there and the guest cannot grow into bank 5. A write at or above `$E000` stops the program and names the address. Fetches and reads of the stub are allowed. The stub pages are copied with an enhanced DMAgic list (megabyte option `$80`, meaning bits 20–27 of the address, started at `$D705`). If that copy does not land, `run8080` stops instead of falling into bank 0.
 

@@ -100,6 +100,9 @@ wlen	= 83
 namei	= 84
 tailat	= 85
 
+; the MEGA65 ROM keeps the 80 by 50 text screen at $40800 in bank 4
+scrhi	= $08
+
 	*=	$200
 	jmp	start
 core_enter:
@@ -1992,7 +1995,7 @@ sh4:
 	adc	offl
 	sta	qptr
 	lda	offh
-	adc	#0
+	adc	#scrhi
 	sta	qptr1
 	lda	#4
 	sta	qptr2
@@ -2773,6 +2776,7 @@ screen_clear:
 	sta	dmalist+4
 	sta	dmalist+5
 	sta	dmalist+6
+	lda	#scrhi
 	sta	dmalist+7
 	lda	#4
 	sta	dmalist+8
@@ -2791,12 +2795,13 @@ scroll:
 	sta	dmalist+2
 	lda	#80
 	sta	dmalist+3
-	lda	#0
+	lda	#scrhi
 	sta	dmalist+4
 	lda	#4
 	sta	dmalist+5
 	lda	#0
 	sta	dmalist+6
+	lda	#scrhi
 	sta	dmalist+7
 	lda	#4
 	sta	dmalist+8
@@ -2818,7 +2823,7 @@ scroll:
 	sta	dmalist+5
 	lda	#$30
 	sta	dmalist+6
-	lda	#$07
+	lda	#$07+scrhi
 	sta	dmalist+7
 	lda	#4
 	sta	dmalist+8
