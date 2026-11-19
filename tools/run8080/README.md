@@ -58,18 +58,21 @@ Bank 4's first 8 KB (`$40000`–`$41FFF`) belongs to the MEGA65 ROM; its 80 by 5
 
 ## System calls
 
-Page zero of the guest is the usual CP/M page: a jump to the warm boot at 0, a jump to BDOS at 5, the file control blocks, and the DMA address. The BDOS stub and the BIOS table are `OUT n` instructions. `OUT` is acted on only inside the stub image. `IN`, and `OUT` below `$E000`, stop the program. The Z80 prefixes `$CB`, `$DD`, `$ED` and `$FD` stop it too. `DI` and `EI` are ignored. `HLT`, BDOS function 0, and a jump or call to `$0000` all leave through the normal exit.
+Page zero of the guest is the usual CP/M page: a jump to the warm boot at 0, a jump to BDOS at 5, the file control blocks, and the DMA address. The BDOS stub at `$E000` is an `OUT 0` followed by `RET`. The BIOS (Basic Input/Output System) jump table is at `$F200`, and the jump at address 0 points to its warm-boot entry at `$F203`, so a program that finds the BIOS through that address gets the usual 17 entries. Each entry jumps to an `OUT n` / `RET` pair, where `n` is the entry number plus 2. `OUT` is acted on only inside the stub image. `IN`, and `OUT` below `$E000`, stop the program. The Z80 prefixes `$CB`, `$DD`, `$ED` and `$FD` stop it too. `DI` and `EI` are ignored. `HLT`, BDOS function 0, and a jump or call to `$0000` all leave through the normal exit.
 
 Functions 1–11 and 13–29 are passed to PEM, with two exceptions. Function 6 is the direct console call and is drawn by `run8080` itself. Function 12 does not call PEM: PEM 12 is the list-status call, so `run8080` returns the CP/M version `$0022` on its own. Functions 31, 33, 34, 35, 36, 37 and 40 are small shims. Function 31 builds a CP/M disk parameter block from the DOS/65 disk control block. Functions 33, 34 and 40 turn the random record into an extent and a record, then do a sequential read or write. A record past the first 16 KB needs that extent's directory entry, because a DOS/65 sequential read stays in the extent the file was opened with. A write to an extent that is not in the directory creates it. Extents it skips are not created, as on CP/M, so a later sequential read ends at the gap. A sequential read already moves to the next extent on its own: the DOS/65 read does that when the record counter reaches 128. DOS/65 files end after 32 extents (512 KB), because DOS/65 has no module byte, so a random record from 4096 up returns error 6. Setting the user number to anything but 0 stops the program. Any other function stops, and the message includes the function number.
 
-A BIOS call stops and names the entry. The benchmark program does not make one.
+The BIOS entries BOOT and WBOOT (warm boot) leave through the normal exit. CONST (console status) returns `$FF` when a key is waiting and 0 otherwise. CONIN (console input) waits for a key and applies the cursor-key translation described below. CONOUT (console output) draws the character in register C the same way as BDOS function 6. Any other BIOS entry stops the program and names the entry. WordStar 4 uses CONST, CONIN and CONOUT.
 
 ## The screen
 
-SuperCalc 2 on this disk is installed for an ADM-3A terminal, and it draws by calling BDOS function 6. Those bytes must not go through SIM console output, which drops the escape character. `run8080` interprets them onto the top 24 rows of the 80 by 50 screen:
+SuperCalc 2 on this disk is installed for an ADM-3A terminal, and it draws by calling BDOS function 6. WordStar 4 on its disk is installed for an ADM-31 terminal and draws through BIOS CONOUT. Those bytes must not go through SIM console output, which drops the escape character. `run8080` interprets them onto the top 24 rows of the 80 by 50 screen. The codes of both terminals are understood:
 
 - Escape, `=`, row, column places the cursor. The program has already added 32 to the row and the column.
-- Control-Z clears the screen.
+- Control-Z, Escape `*` and Escape `+` clear the screen.
+- Escape `T` (or `t`) clears to the end of the line. Escape `Y` (or `y`) clears to the end of the screen. The cursor does not move.
+- Control-H moves the cursor left, Control-K up, Control-L right, and Control-^ (`$1E`) home. Carriage return goes to column 0. Line feed goes down one row and keeps the column; on the last row it scrolls.
+- Other escape sequences, such as Escape `(` and Escape `)` for the display intensity, are accepted and ignored. Other control characters are ignored.
 - The MEGA65 cursor keys are translated before the program sees them: up is Control-K (`$0B`), down is Control-J (`$0A`), left is Control-H (`$08`), right is Control-L (`$0C`). Cursor down and cursor right arrive as 17 and 29. Cursor up and cursor left arrive as 145 and 157, and the System Interface Module passes those two through so this translation can see them.
 
 ## What the bench checks

@@ -40,21 +40,23 @@ def screen(machine) -> bytes:
 
 
 def adm(stream: bytes) -> bytes:
-    """The same ADM-3A rules run8080 applies to BDOS function 6 output."""
+    """The same ADM-3A/ADM-31 rules run8080 applies to console output."""
     cells = bytearray(b" " * (80 * 24))
     row = col = state = 0
 
-    def put(value):
-        nonlocal row, col
-        cells[row * 80 + col] = value
+    def advance():
+        nonlocal col
         col += 1
         if col == 80:
             col = 0
             linefeed()
 
+    def put(value):
+        cells[row * 80 + col] = value
+        advance()
+
     def linefeed():
-        nonlocal row, col
-        col = 0
+        nonlocal row
         if row < 23:
             row += 1
             return
@@ -64,6 +66,13 @@ def adm(stream: bytes) -> bytes:
     for byte in stream:
         if state == 1:
             state = 2 if byte == 0x3D else 0
+            if byte in b"*+":
+                cells[:] = b" " * len(cells)
+                row = col = 0
+            elif byte in b"Tt":
+                cells[row * 80 + col:row * 80 + 80] = b" " * (80 - col)
+            elif byte in b"Yy":
+                cells[row * 80 + col:] = b" " * (len(cells) - row * 80 - col)
             continue
         if state == 2:
             row = min(23, max(0, byte - 32))
@@ -82,6 +91,14 @@ def adm(stream: bytes) -> bytes:
             col = 0
         elif byte == 0x0A:
             linefeed()
+        elif byte == 0x08:
+            col = max(0, col - 1)
+        elif byte == 0x0B:
+            row = max(0, row - 1)
+        elif byte == 0x0C:
+            advance()
+        elif byte == 0x1E:
+            row = col = 0
         elif byte >= 0x20:
             put(byte)
     return bytes(cells)
@@ -147,6 +164,32 @@ def test_adm3a_screen_matches_the_cpm_byte_stream():
     assert not any(ours.bank(4)[:SCREEN])
 
 
+def test_adm31_erase_and_cursor_controls():
+    # WordStar 4 is installed for the ADM-31: ESC * clears the screen,
+    # ESC T erases to the end of the line, ESC Y to the end of the screen.
+    def at(row, col):
+        return b"\x1b=" + bytes([32 + row, 32 + col])
+    stream = (b"\x1b*" + b"AAAAAAAAAA\r\n" * 6
+              + at(1, 4) + b"\x1bT"                  # row 1 keeps AAAA
+              + at(3, 2) + b"\x1bY"                  # rows 3.. keep AA on row 3
+              + at(0, 3) + b"\x08\x08x"              # backspace twice: col 1
+              + b"\x0cy" + b"\x0bz"                  # right, then up (stays row 0)
+              + b"\x1e" + b"h" + b"\x1b(" + b"\x1b)" + b"\n" + b"L")
+    program = bytearray()
+    for value in stream:
+        program += bytes([0x0E, 6, 0x1E, value, 0xCD, 0x05, 0x00])
+    program += bytes([0xC3, 0x00, 0x00])
+    ours, cpm = both(bytes(program), "adm31")
+    grid = screen(ours)
+    assert grid == adm(bytes(cpm.console.output))
+    assert grid[0:6] == b"hxAyzA"
+    assert grid[80:90] == b"ALAA      "             # line feed keeps the column
+    assert grid[2 * 80:2 * 80 + 10] == b"AAAAAAAAAA"
+    assert grid[3 * 80:3 * 80 + 10] == b"AA        "
+    assert grid[4 * 80:] == b" " * (20 * 80)
+    assert grid[80 + 1] == ord("L")
+
+
 def test_read_buffer():
     program = bytes([
         0x21, 0x80, 0x00, 0x36, 20,
@@ -199,6 +242,35 @@ def test_random_read_past_the_first_extent():
     got = bytes(mem(ours, 0x4000 + i) for i in range(128))
     expected = bytes(mem(cpm, 0x4000 + i) for i in range(128))
     assert got == expected == data[128 * 128:129 * 128]
+
+
+def test_bios_console_through_the_copied_jump_target():
+    # Like WordStar 4: take the CONOUT target out of the BIOS jump table at
+    # (0001)+10 and call it; CONST and CONIN are called through the table.
+    sub = 0x012D
+    program = bytes([
+        0x06, 0x55,                     # MVI B,55H  (BIOS keeps B)
+        0x2A, 0x01, 0x00,               # LHLD 0001  -> WBOOT entry
+        0x11, 0x0A, 0x00,               # LXI D,10
+        0x19,                           # DAD D      -> CONOUT jump operand
+        0x5E, 0x23, 0x56, 0xEB,         # HL = CONOUT target
+        0x22, (sub + 1) & 0xFF, sub >> 8,  # SHLD sub+1
+        0x0E, ord("H"), 0xCD, sub & 0xFF, sub >> 8,
+        0x0E, ord("I"), 0xCD, sub & 0xFF, sub >> 8,
+        0x78, 0x32, 0x01, 0x02,         # MOV A,B / STA 0201
+        0xCD, 0x06, 0xF2, 0x32, 0x00, 0x02,  # CALL CONST / STA 0200
+        0xCD, 0x09, 0xF2, 0x32, 0x02, 0x02,  # CALL CONIN / STA 0202
+        0xC3, 0x00, 0x00,
+    ])
+    assert len(program) == sub - 0x100
+    program += bytes([0xCD, 0x00, 0x00, 0xC9])
+    ours, cpm = both(program, "bios", script=b"\x91")
+    assert screen(ours)[:2] == b"HI"
+    assert bytes(cpm.console.output)[:2] == b"HI"
+    assert peek(ours, 0x201) == 0x55
+    assert peek(ours, 0x200) == 0xFF and cpm.mem[0x200] == 0xFF
+    assert peek(ours, 0x202) == 0x0B
+    assert mem(ours, 1) | mem(ours, 2) << 8 == 0xF203
 
 
 def test_random_record_beyond_512_kb_returns_6():

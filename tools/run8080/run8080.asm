@@ -1093,12 +1093,50 @@ do_out:
 	bcc	out_bad
 	lda	port
 	beq	bdos_entry
-	cmp	#1
-	beq	warm_exit
+	cmp	#4		; 1: old warm boot stub, 2-3: BIOS boot, warm boot
+	bcc	warm_exit
+	beq	bios_const
+	cmp	#5
+	beq	bios_conin
+	cmp	#6
+	beq	bios_conout
 	sta	func
 	lda	#8
 	sta	reason
 	jmp	stop
+
+; BIOS console entries.  Only A carries a result; the other registers stay.
+bios_const:
+	ldx	#11
+	lda	#0
+	tay
+	jsr	pemcall
+	cmp	#0
+	beq	bios_ra
+	lda	#$ff
+bios_ra:
+	sta	ra
+	jmp	dispatch
+
+bios_conin:
+	ldx	#11
+	lda	#0
+	tay
+	jsr	pemcall
+	cmp	#0
+	beq	bios_conin
+	ldx	#6
+	lda	#0
+	tay
+	jsr	pemcall
+	jsr	mapkey
+	jmp	bios_ra
+
+bios_conout:
+	ldx	#bc
+	jsr	phys_to_log
+	jsr	adm_out
+	jmp	dispatch
 out_bad:
 	lda	#3
 	sta	reason
@@ -1949,9 +1987,13 @@ adm_out:
 	lda	admst
 	beq	ad_norm
 	cmp	#1
-	beq	ad_esc
+	bne	ad_st2
+	jmp	ad_esc
+ad_st2:
 	cmp	#2
-	beq	ad_srow
+	bne	ad_st3
+	jmp	ad_srow
+ad_st3:
 	jmp	ad_scol
 ad_norm:
 	lda	glyph
@@ -1969,16 +2011,43 @@ ad_ncr:
 	bne	ad_nlf
 	jmp	do_lf
 ad_nlf:
+	cmp	#$08		; cursor left
+	beq	do_bs
+	cmp	#$0b		; cursor up
+	beq	do_up
+	cmp	#$0c		; cursor right
+	bne	ad_nrt
+	jmp	advance
+ad_nrt:
+	cmp	#$1e		; home
+	beq	do_home
 	cmp	#$20
 	bcc	ad_ign
 	jsr	putcell
 	jmp	advance
 ad_ign:
 	rts
+do_bs:
+	lda	scol
+	beq	ad_ign
+	dec	scol
+	rts
+do_up:
+	lda	srow
+	beq	ad_ign
+	dec	srow
+	rts
+do_home:
+	lda	#0
+	sta	srow
+	sta	scol
+	rts
 ad_set1:
 	lda	#1
 	sta	admst
 	rts
+; ESC = row col as on the ADM-3A; the ADM-31 adds ESC * and ESC + (clear
+; screen), ESC T (clear to end of line) and ESC Y (clear to end of screen).
 ad_esc:
 	lda	glyph
 	cmp	#'='
@@ -1987,8 +2056,56 @@ ad_esc:
 	sta	admst
 	rts
 ad_res:
+	ldx	#0
+	stx	admst
+	cmp	#'*'
+	beq	ad_cls
+	cmp	#'+'
+	beq	ad_cls
+	and	#$df		; upper case
+	cmp	#'T'
+	beq	do_eol
+	cmp	#'Y'
+	beq	do_eos
+	rts
+ad_cls:
+	jmp	do_cls
+
+do_eol:
+	lda	scol
+	pha
+	lda	#' '
+	sta	glyph
+eol_l:
+	jsr	putcell
+	inc	scol
+	lda	scol
+	cmp	#80
+	bcc	eol_l
+	pla
+	sta	scol
+	rts
+
+do_eos:
+	jsr	do_eol
+	lda	srow
+	pha
+	lda	scol
+	pha
 	lda	#0
-	sta	admst
+	sta	scol
+eos_r:
+	inc	srow
+	lda	srow
+	cmp	#24
+	bcs	eos_x
+	jsr	do_eol
+	jmp	eos_r
+eos_x:
+	pla
+	sta	scol
+	pla
+	sta	srow
 	rts
 ad_srow:
 	lda	glyph
@@ -2854,7 +2971,7 @@ dma_copy_bios:
 	lda	#0
 	sta	dmalist+2
 	sta	dmalist+3
-	lda	#51
+	lda	#biosend-biosimg
 	sta	dmalist+4
 	lda	#0
 	sta	dmalist+5
@@ -3071,15 +3188,23 @@ hextab:
 stopmsg:
 	.byte	"STOP ",0
 pageimg:
-	.byte	$c3,$03,$e0,$00,$00,$c3,$00,$e0
+	.byte	$c3,$03,$f2,$00,$00,$c3,$00,$e0
 stubimg:
 	.byte	$d3,$00,$c9,$d3,$01,$c9
+; BIOS at 8080 $F200: a jump table, as programs copy its targets, and at
+; $F233 the 17 targets, OUT 2 to OUT 18 each followed by RET.
 biosimg:
+	.byte	$c3,$33,$f2,$c3,$36,$f2,$c3,$39,$f2,$c3,$3c,$f2
+	.byte	$c3,$3f,$f2,$c3,$42,$f2,$c3,$45,$f2,$c3,$48,$f2
+	.byte	$c3,$4b,$f2,$c3,$4e,$f2,$c3,$51,$f2,$c3,$54,$f2
+	.byte	$c3,$57,$f2,$c3,$5a,$f2,$c3,$5d,$f2,$c3,$60,$f2
+	.byte	$c3,$63,$f2
 	.byte	$d3,$02,$c9,$d3,$03,$c9,$d3,$04,$c9,$d3,$05,$c9
 	.byte	$d3,$06,$c9,$d3,$07,$c9,$d3,$08,$c9,$d3,$09,$c9
 	.byte	$d3,$0a,$c9,$d3,$0b,$c9,$d3,$0c,$c9,$d3,$0d,$c9
 	.byte	$d3,$0e,$c9,$d3,$0f,$c9,$d3,$10,$c9,$d3,$11,$c9
 	.byte	$d3,$12,$c9
+biosend:
 fntab:
 	.word	warm_exit,fn1,fn2,fn3,fn4,fn5,fn6,fn7
 	.word	fn8,fn9,fn10,fn11,fn12,fn13,fn14,fn15
