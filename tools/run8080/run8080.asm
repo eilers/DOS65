@@ -1560,6 +1560,77 @@ fn32b:
 	sta	reason
 	jmp	stop
 
+; Random read and write (BDOS 33, 34) take the record number from the FCB.  DOS/65
+; sequential reads keep the extent (ex, 16 KB of a file) they were opened with, so
+; a record past the first extent needs that extent's directory entry first.
+; seek_extent searches the directory with the wanted ex (search next steps through the
+; other entries of the file), and copies the matching entry's record count and
+; allocation map into fcb65.  Returns A=0 when fcb65 is ready, A=1 when no such extent exists.
+seek_extent:
+	lda	r0
+	asl
+	lda	#0
+	adc	#0
+	sta	tmplo
+	lda	r1
+	asl
+	ora	tmplo
+	and	#$1f
+	sta	se_tex
+	cmp	fcb65+12
+	bne	se_go
+	lda	#0
+	rts
+se_go:
+	lda	se_tex
+	sta	fcb65+12
+	jsr	use_recbuf
+	lda	#<fcb65
+	ldy	#>fcb65
+	ldx	#17
+	jsr	pemcall
+se_find:
+	cmp	#$ff
+	beq	se_none
+	asl
+	asl
+	asl
+	asl
+	asl
+	sta	se_base
+	tax
+	lda	recbuf+12,x
+	cmp	se_tex
+	beq	se_copy
+	lda	#<fcb65
+	ldy	#>fcb65
+	ldx	#18
+	jsr	pemcall
+	jmp	se_find
+se_copy:
+	lda	recbuf+15,x
+	sta	fcb65+15
+	ldy	#0
+se_cp:
+	lda	recbuf+16,x
+	sta	fcb65+16,y
+	inx
+	iny
+	cpy	#16
+	bne	se_cp
+	lda	se_tex
+	sta	fcb65+12
+	lda	#0
+	rts
+se_none:
+	lda	se_tex
+	sta	fcb65+12
+	lda	#1
+	rts
+
+se_tex:	.byte	0
+se_base:	.byte	0
+
 fn33:
 	jsr	fcb_in
 	jsr	load_rr
@@ -1568,6 +1639,11 @@ fn33:
 	lda	#6
 	jmp	ret_a
 fn33ok:
+	jsr	seek_extent
+	beq	fn33sk
+	lda	#1
+	jmp	ret_a
+fn33sk:
 	jsr	apply_rr
 	jsr	use_recbuf
 	lda	#<fcb65
@@ -1593,6 +1669,11 @@ fn34:
 	lda	#6
 	jmp	ret_a
 fn34ok:
+	jsr	seek_extent
+	beq	fn34sk
+	lda	#1
+	jmp	ret_a
+fn34sk:
 	jsr	dma_to_rec
 	jsr	apply_rr
 	jsr	use_recbuf
