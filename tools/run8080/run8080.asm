@@ -1565,7 +1565,10 @@ fn32b:
 ; a record past the first extent needs that extent's directory entry first.
 ; seek_extent searches the directory with the wanted ex (search next steps through the
 ; other entries of the file), and copies the matching entry's record count and
-; allocation map into fcb65.  Returns A=0 when fcb65 is ready, A=1 when no such extent exists.
+; allocation map into fcb65.  The current extent is closed first, so blocks
+; allocated since it was opened stay in the directory.  Returns A=0 when fcb65
+; is ready, A=1 when no such extent exists.  PEM search returns the entry slot
+; (0 to 3); 32 times that is the entry's offset in the record buffer.
 seek_extent:
 	lda	r0
 	asl
@@ -1582,6 +1585,10 @@ seek_extent:
 	lda	#0
 	rts
 se_go:
+	lda	#<fcb65
+	ldy	#>fcb65
+	ldx	#16
+	jsr	pemcall
 	lda	se_tex
 	sta	fcb65+12
 	jsr	use_recbuf
@@ -1634,14 +1641,14 @@ se_base:	.byte	0
 fn33:
 	jsr	fcb_in
 	jsr	load_rr
-	lda	r2
+	jsr	rr_range
 	beq	fn33ok
 	lda	#6
 	jmp	ret_a
 fn33ok:
 	jsr	seek_extent
 	beq	fn33sk
-	lda	#1
+	lda	#4			; CP/M: seek to an extent the file does not have
 	jmp	ret_a
 fn33sk:
 	jsr	apply_rr
@@ -1664,13 +1671,19 @@ f33ok:
 fn34:
 	jsr	fcb_in
 	jsr	load_rr
-	lda	r2
+	jsr	rr_range
 	beq	fn34ok
 	lda	#6
 	jmp	ret_a
 fn34ok:
 	jsr	seek_extent
 	beq	fn34sk
+	lda	#<fcb65		; the extent is not in the directory yet: create it
+	ldy	#>fcb65
+	ldx	#22
+	jsr	pemcall
+	cmp	#$ff
+	bne	fn34sk
 	lda	#1
 	jmp	ret_a
 fn34sk:
@@ -1795,6 +1808,16 @@ load_rr:
 	jsr	inc_logical
 	jsr	read_ptr
 	sta	r2
+	rts
+
+; DOS/65 files end after 32 extents (512 KB, records 0-4095): PEM never uses
+; the module byte (FCB byte 14).  Z=1 when r2:r1:r0 is below 4096.
+rr_range:
+	lda	r2
+	bne	rr_x
+	lda	r1
+	and	#$f0
+rr_x:
 	rts
 
 apply_rr:

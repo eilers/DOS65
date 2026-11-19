@@ -157,7 +157,8 @@ class HostFS:
 
     def search_first(self, mem, fcb: int, dma: int) -> int:
         pattern = self.fcb_name(mem, fcb)
-        all_extents = mem[fcb + 12] == ord("?")
+        wanted = mem[fcb + 12]
+        all_extents = wanted == ord("?")
         entries = []
         directory = self.drive_dir(mem[fcb])
         for path in sorted(directory.iterdir()):
@@ -166,7 +167,15 @@ class HostFS:
                 continue
             total = self._records(path)
             extents = max(1, (total + EXTENT_RECORDS - 1) // EXTENT_RECORDS)
-            for extent in range(extents if all_extents else 1):
+            # A question mark lists every 16 KB extent. A number selects that
+            # extent, so a random read past the first 16 KB can find its entry.
+            if all_extents:
+                chosen = range(extents)
+            elif wanted < extents:
+                chosen = (wanted,)
+            else:
+                chosen = ()
+            for extent in chosen:
                 count = min(EXTENT_RECORDS, total - extent * EXTENT_RECORDS)
                 entries.append((name, extent, max(0, count)))
         self._search = entries
