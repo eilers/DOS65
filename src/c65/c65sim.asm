@@ -244,10 +244,11 @@ cin2	cmp	#65		;see if < A
 	clc			;add 32
 	adc	#32		;to make lower case
 	bne	coninx		;and return that code
-;any remaining characters > 95 are ignored by following section
-;this may get changed in later versions
-cin3	cmp	#96		;see if > 95
-	bcs	conin		;if so loop for another
+;characters > 95 are ignored, except cursor up (145) and cursor
+;left (157). The test lives in cin_hi so this spot stays the same
+;length and the cold-boot entry stays at its fixed address.
+cin3	jmp	cin_hi
+	nop
 ;any other character < 128 is then returned
 coninx	rts
 ;console output of char in a
@@ -1196,6 +1197,19 @@ IRQ_QADDR .byte	0,0,0,0	; Stores A,X,Y,Z for IRQ
 NMI_PF	.byte	0	; Store Processor register for NMI
 NMI_PC	.word	0	; Stores IRQ return address for NMI
 NMI_QADDR .byte	0,0,0,0	; Stores A,X,Y,Z for NMI
+
+;console input continued. Placed after the fixed SIM data so the
+;cold-boot entry and the IRQ save area stay at their addresses.
+;Cursor down (17) and cursor right (29) are below 96 and already
+;returned. Cursor up and cursor left are not.
+cin_hi	cmp	#145		;cursor up
+	beq	cin_yes
+	cmp	#157		;cursor left
+	beq	cin_yes
+	cmp	#96		;see if > 95
+	bcs	cin_no
+cin_yes	jmp	coninx
+cin_no	jmp	conin
 
 ; --------------------------------------
 ; Mapping of Mega65 Kernel calls to 

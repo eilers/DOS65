@@ -55,7 +55,7 @@ SuperCalc 2 on this disk is installed for an ADM-3A terminal, and it draws by ca
 
 - Escape, `=`, row, column places the cursor. The program has already added 32 to the row and the column.
 - Control-Z clears the screen.
-- The MEGA65 cursor keys are translated before the program sees them: up is Control-K (`$0B`), down is Control-J (`$0A`), left is Control-H (`$08`), right is Control-L (`$0C`).
+- The MEGA65 cursor keys are translated before the program sees them: up is Control-K (`$0B`), down is Control-J (`$0A`), left is Control-H (`$08`), right is Control-L (`$0C`). Cursor down and cursor right arrive as 17 and 29. Cursor up and cursor left arrive as 145 and 157, and the System Interface Module passes those two through so this translation can see them.
 
 ## What the bench checks
 
