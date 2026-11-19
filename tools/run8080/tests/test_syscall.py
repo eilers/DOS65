@@ -34,7 +34,9 @@ def both(program: bytes, tail: str, *, files=None, script=b"", limit=2_000_000):
 
 
 def screen(machine) -> bytes:
-    return bytes(machine.bank(4)[SCREEN:SCREEN + SCREEN_BYTES])
+    """The 80 by 24 grid as ASCII: screen codes $01-$1A are the lowercase letters."""
+    raw = machine.bank(4)[SCREEN:SCREEN + SCREEN_BYTES]
+    return bytes(code + 0x60 if 1 <= code <= 0x1A else code for code in raw)
 
 
 def adm(stream: bytes) -> bytes:
@@ -114,6 +116,17 @@ def test_console_status_and_cursor_keys():
     ours, _cpm = both(program, "key", script=b"\x91")
     assert peek(ours, 0x200) == 0xFF
     assert peek(ours, 0x201) == 0x0B
+
+
+def test_lowercase_letters_are_stored_as_lowercase_screen_codes():
+    program = bytearray()
+    for value in b"aZz":
+        program += bytes([0x0E, 6, 0x1E, value, 0xCD, 0x05, 0x00])
+    program += bytes([0xC3, 0x00, 0x00])
+    ours, _cpm = both(bytes(program), "lower")
+    assert ours.exit_reason == "exit"
+    assert bytes(ours.bank(4)[SCREEN:SCREEN + 3]) == bytes([0x01, 0x5A, 0x01 + 25])
+    assert screen(ours)[:3] == b"aZz"
 
 
 def test_adm3a_screen_matches_the_cpm_byte_stream():

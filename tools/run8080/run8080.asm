@@ -2003,6 +2003,13 @@ sh4:
 	sta	qptr3
 	ldz	#0
 	lda	glyph
+	cmp	#'a'
+	bcc	pc_store
+	cmp	#'z'+1
+	bcs	pc_store
+	sec
+	sbc	#$60		; lowercase ASCII $61-$7A is screen code $01-$1A
+pc_store:
 	sta	[qptr],z
 	rts
 
