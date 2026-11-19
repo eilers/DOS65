@@ -4,8 +4,9 @@ Supported layouts:
 - C128 CP/M on 1541 (.d64, single sided) and 1571 (.d71, double sided):
   1 KB / 2 KB blocks on the zoned GCR (Group Coded Recording) tracks, sector
   mapping as in ctools (ctools/src/bios.cc).
-- Raw CP/M images (for example the SuperCalc .d81): the directory starts at
-  offset 0, 2 KB blocks, block n at offset n * 2048.
+- C128 CP/M on 1581 (.d81), also the DOS/65 1581 format, see d81.py.
+- Raw CP/M images: the directory starts at offset 0, 2 KB blocks, block n
+  at offset n * 2048.
 
 Images may be gzip compressed (.gz).
 """
@@ -15,6 +16,8 @@ from __future__ import annotations
 import gzip
 from dataclasses import dataclass
 from pathlib import Path
+
+from . import d81
 
 SECTOR = 256
 D64_SIZE = 683 * SECTOR
@@ -60,7 +63,12 @@ class Layout:
 class CpmImage:
     def __init__(self, data: bytes):
         self.data = data
-        if len(data) in (D71_SIZE, D71_SIZE + 1366) and data[_d64_offset(1, 0):][:3] == b"CBM":
+        self._read_block = None
+        if d81.is_cpm_1581(data):
+            self.layout = Layout("c128-1581", d81.BLOCK, d81.DIR_ENTRIES, True)
+            self._translate = None
+            self._read_block = lambda number: d81.read_block(self.data, number)
+        elif len(data) in (D71_SIZE, D71_SIZE + 1366) and data[_d64_offset(1, 0):][:3] == b"CBM":
             self.layout = Layout("c128-1571", 2048, 128, False)
             self._translate = _c128_ds
         elif len(data) in (D64_SIZE, D64_SIZE + 683) and data[_d64_offset(1, 0):][:3] == b"CBM":
@@ -98,6 +106,8 @@ class CpmImage:
 
     def block(self, number: int) -> bytes:
         size = self.layout.block_size
+        if self._read_block is not None:
+            return self._read_block(number)
         if self._translate is None:
             return self.data[number * size:(number + 1) * size]
         per_block = size // SECTOR

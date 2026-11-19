@@ -33,6 +33,21 @@ The first word of the command tail is the program name. `.COM` is added when no 
 
 The machine is already at its 40 MHz fast clock, and `run8080` leaves that clock alone. On the way out it jumps to the DOS/65 warm boot at `$0100`.
 
+## Program disks
+
+The MEGA65 SIM (System Interface Module) 1.01 reads two disk formats on drives A and B: the C64 CP/M format on a 1541 disk (`.d64`, 134 KB), and the C128 CP/M format on a 1581 disk (`.d81`, 790 KB). After each warm boot, the SIM asks each drive for track 40 the first time that drive is used. Only a 1581 disk has track 40, and its CBM (Commodore DOS) header there has format `D`. So change disks only at the `A>` prompt, then press Control-C.
+
+On a 1581 disk, a DOS/65 track is one half of a 1581 track (20 sectors). The first half of track 40 holds the CBM header and directory, and DOS/65 skips it. Blocks are 2 KB, the highest block is 396, and there are 128 directory entries. These are the values of the C128 CP/M BIOS, so C128 CP/M 1581 disks can be read directly.
+
+`mkd81.py` makes such a disk. It copies every user 0 file of a CP/M disk image, and it can add host files:
+
+```
+python3 mkd81.py supercalc2.d81 --name "SUPERCALC 2" --id S2 --from SuperCalc_v2.d81
+python3 mkd81.py tools.d81 --name TOOLS FILE.COM OTHER.DAT
+```
+
+The new disk has a fresh directory. CP/M attribute bits are cleared, because DOS/65 compares file names byte by byte. The CBM BAM (block availability map) marks every sector as used, so the MEGA65's own DOS does not write into the CP/M data.
+
 ## Where the 64 KB lives
 
 Bank 0 is left alone. It holds kernel data and the SIM-to-kernel bridge. Banks 2 and 3 are ROM. Bank 5 is DOS/65 itself.
