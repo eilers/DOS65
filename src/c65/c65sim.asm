@@ -35,6 +35,9 @@
 ;		added blank dcb table entries for drives 2-7 (c-h)
 ; 	4 april 2026
 ;		ported to the C65 (Mega65) by Stefan Eilers
+;	19 november 2026
+;		SIM 1.01: drives a and b also read the C128 CP/M 1581 format,
+;		increased to 12 pages
 
 .CPU  45GS02 
 
@@ -124,7 +127,7 @@ sysdef	.byte	8		;backspace
 iotype	.byte	1
 ;opening id message
 opnmsg	.byte	cr,lf,"Mega65 60K DOS/65 2.19 "
-	.byte	"SIM 1.00",0
+	.byte	"SIM 1.01",0
 ;cold entry from loader
 boot
 ;first clear all files and channels
@@ -150,6 +153,8 @@ setup	ldx	#0		;clear index
 ;first clear key dba & other variables
 	stx	hstact		;host buffer inactive
 	stx	unacnt		;clear unalloc count
+	stx	probed		;disks may have been changed
+	stx	probed+1
 setupl	lda	inttbl,x	;get byte
 	sta	$100,x		;insert at start
 	inx
@@ -396,6 +401,13 @@ LADE	LDA	#4		;logical file 4
 ;	0 if drive not present
 seldsk	and	#7		;three lsbs only
 	sta	sekdsk		;save for later
+	cmp	#2		;only a and b exist
+	bcs	seldx
+	tax
+	lda	probed,x	;format known since warm boot?
+	bne	seldx		;yes
+	jsr	probe		;else ask the drive
+seldx	lda	sekdsk
 	asl	a		;multiply by two
 	tax			;make an undex
 	lda	dcbtbl,x	;get address
@@ -721,13 +733,19 @@ writeh	jsr	hcom		;setup params
 ;	one and if track is 18 or more it is increased by one
 ;	more to skip directory track
 ;1541 sector numbers go from 0 to 16
-hcom	lda	hstdsk		;get disk number
+;The 1581 format is the one of C128 CP/M: a dos/65 track is one half of a
+;1581 track (sectors 0-19 or 20-39), there are no system tracks, and half
+;track 78 (sectors 0-19 of track 40) holds the CBM header and directory.
+hcom	ldx	hstdsk		;get disk number
+	txa
 ;now calculate device number
 	clc			;by adding "8"
 	adc	#8		;to drive number
 	sta	device
-;ignore high byte of track and sector for 1541
+;ignore high byte of track and sector
 	lda	hsttrk
+	ldy	fmttbl,x	;1581 disk?
+	bne	hc1581
 	sta	phytrk
 	inc	phytrk		;bump track by one
 	lda	phytrk		;now check for 18
@@ -737,6 +755,70 @@ hcom	lda	hstdsk		;get disk number
 nobump	lda	hstsec		;then sector
 	sta	physec
 	rts			;done
+hc1581	cmp	#78		;skip the cbm half track
+	bcc	hc81a
+	adc	#0		;c=1 so 78-->79 etc
+hc81a	lsr	a		;1581 track - 1, c = second half
+	sta	phytrk
+	inc	phytrk		;bump track by one
+	lda	hstsec
+	bcc	hc81b		;first half: sectors 0-19
+	adc	#19		;c=1 so sector + 20
+hc81b	sta	physec
+	rts
+;find out whether drive x (0 or 1) holds a 1541 or a 1581 disk and
+;point its dcb at the matching table. Only a 1581 disk has track 40, and
+;its sector 0 there is the CBM header with format 'D' in byte 2.
+;The host buffer is not touched.
+probe	inc	probed,x	;probe once per warm boot
+	txa
+	cmp	lstdrv		;channels open to this drive?
+	beq	prbtrk		;yes
+	sta	lstdrv		;else reopen them
+	clc
+	adc	#8
+	sta	device
+	jsr	LB97
+prbtrk	lda	#40		;track 40, sector 0
+	sta	phytrk
+	lda	#0
+	sta	physec
+	ldy	#1		;a single try: a 1541 disk has no track 40
+	lda	#'1'		;block read
+	jsr	LAF2T
+	bne	prb41		;error, so not a 1581 disk
+	jsr	LBDE		;read from channel 2
+	jsr	BASIN		;skip link track
+	jsr	BASIN		;and link sector
+	jsr	BASIN		;get disk format
+	pha
+	jsr	CLRCH		;restore default channel
+	pla
+	cmp	#'D'		;1581?
+	bne	prb41
+	lda	#2		;format 2 = 1581
+	bne	prbset		;always
+prb41	lda	#0		;format 0 = 1541
+prbset	ldx	sekdsk
+	sta	fmttbl,x
+	asl	a		;records per block:
+	asl	a		;8 for 1541, 16 for 1581
+	adc	#8
+	sta	rbltbl,x
+	txa			;dcb index = (drive + format) * 2
+	adc	fmttbl,x
+	asl	a
+	tay
+	txa
+	asl	a
+	tax
+	lda	dcbsrc,y	;set dcb address for seldsk
+	sta	dcbtbl,x
+	lda	dcbsrc+1,y
+	sta	dcbtbl+1,x
+	rts
+;dcb addresses by format: 1541 a, 1541 b, 1581 a, 1581 b
+dcbsrc	.word	dcba,dcbb,dcba8,dcbb8
 ;following section contains core C64 I/O routines
 ;change drive by sensing new drive and then closing 15 & 2
 ;and then reopening 15 & 2 with new device number
@@ -790,7 +872,9 @@ LA76	LDA	HSTBUF,X	;get byte from buffer
 ;set up user mode
 ;error return: a=$ff & z=0 else a=0 & z=1
 ;returns: a
-LAF2	STA	LB62+1		;save "1" or "2" for mode
+LAF2	LDY	#2		;2 tries
+;enter here with y = number of tries
+LAF2T	STA	LB62+1		;save "1" or "2" for mode
 	LDA	phytrk		;now get track number
 	JSR	LB89		;convert to ASCII
 	STX	LB62+7		;and store in string
@@ -799,8 +883,7 @@ LAF2	STA	LB62+1		;save "1" or "2" for mode
 	JSR	LB89		;convert to ASCII
 	STX	LB62+10		;and store in string
 	STA	LB62+11
-	LDA	#2		;set DATA for 2 tries
-	STA	DATA
+	STY	DATA		;set DATA for y tries
 LB1B	JSR	LBF4		;set up command channel
 	LDY	#13		;string is 13 characters
 LB20	LDA	LB62,X		;get character and
@@ -903,7 +986,7 @@ LBF4	LDX	#15		;LA 15 for command channel
 	LDX	#0		;x = 0 to start transfer after RTS
 	RTS
 ;disk control blocks
-;both for C64 1541
+;C64 1541 format
 ;drive a
 dcba	.word	135		;max block number
 	.word	34		;records per track
@@ -920,6 +1003,25 @@ dcbb	.word	135		;max block number
 	.byte	0		;block size = 1024
 	.word	63		;max directory number
 	.word	almpb		;address of map for a
+	.byte	0		;do checksums
+	.word	ckmpb		;checksum map
+;C128 CP/M 1581 format: 159 tracks of 5 KB, 2 KB blocks, 128 entries
+;drive a
+dcba8	.word	396		;max block number
+	.word	40		;records per track
+	.word	0		;number system tracks
+	.byte	1		;block size = 2048
+	.word	127		;max directory number
+	.word	almpa		;address of map for a
+	.byte	0		;do checksums
+	.word	ckmpa		;checksum map
+;drive b
+dcbb8	.word	396		;max block number
+	.word	40		;records per track
+	.word	0		;number system tracks
+	.byte	1		;block size = 2048
+	.word	127		;max directory number
+	.word	almpb		;address of map for b
 	.byte	0		;do checksums
 	.word	ckmpb		;checksum map
 ;data area
@@ -978,20 +1080,24 @@ phytrk				;physical  track
 	*=	*+2
 physec				;physical sector
 	*=	*+2
-;allocation maps
+probed				;<>0 if format of drive a, b known
+	*=	*+2
+fmttbl				;format of drive a, b: 0=1541, 2=1581
+	*=	*+2
+;allocation maps, sized for the 1581 format (397 blocks)
 ;drive a
 almpa
-	*=	*+17
+	*=	*+50
 ;drive b
 almpb
-	*=	*+17
-;checksum maps
+	*=	*+50
+;checksum maps, sized for the 1581 format (128 entries)
 ;drive a
 ckmpa
-	*=	*+16
+	*=	*+32
 ;drive b
 ckmpb
-	*=	*+16
+	*=	*+32
 ;deblocking buffer for dba
 hstbuf
 	*=	*+256		;256 byte sectors
