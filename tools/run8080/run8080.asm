@@ -120,6 +120,9 @@ start:
 	sta	runmode
 	lda	#3
 	tab
+	jsr	screen_clear
+	jsr	screen_on
+	jsr	place_cursor
 	jsr	dma_clear_window
 	jsr	dma_fill_attic
 	jsr	dma_copy_stub
@@ -1092,7 +1095,9 @@ do_out:
 	cmp	#$e0
 	bcc	out_bad
 	lda	port
-	beq	bdos_entry
+	bne	out_bios
+	jmp	bdos_entry
+out_bios:
 	cmp	#4		; 1: old warm boot stub, 2-3: BIOS boot, warm boot
 	bcc	warm_exit
 	beq	bios_const
@@ -1106,11 +1111,20 @@ do_out:
 	jmp	stop
 
 ; BIOS console entries.  Only A carries a result; the other registers stay.
+; These call the SIM (System Interface Module), not PEM.  PEM's console
+; status treats Control-S ($13) as freeze: it waits for another key and
+; discards both, so WordStar would never see cursor left.
+; The MEGA65 ROM keyboard reader also drops Control-S.  That key arrives as
+; byte $13, the same code as HOME, with the control modifier.  The reader
+; dequeues it and then throws it away.  steal_ctrls takes it from the
+; hardware queue while interrupts are still off, before that reader runs.
 bios_const:
-	ldx	#11
-	lda	#0
-	tay
-	jsr	pemcall
+	jsr	steal_ctrls
+	beq	bc_sim
+	lda	#$ff
+	jmp	bios_ra
+bc_sim:
+	jsr	sim_const
 	cmp	#0
 	beq	bios_ra
 	lda	#$ff
@@ -1119,16 +1133,17 @@ bios_ra:
 	jmp	dispatch
 
 bios_conin:
-	ldx	#11
-	lda	#0
-	tay
-	jsr	pemcall
+	jsr	steal_ctrls
+	beq	bi_sim
+	ldx	#0
+	stx	hwpend
+	jsr	mapkey
+	jmp	bios_ra
+bi_sim:
+	jsr	sim_const
 	cmp	#0
 	beq	bios_conin
-	ldx	#6
-	lda	#0
-	tay
-	jsr	pemcall
+	jsr	sim_conin
 	jsr	mapkey
 	jmp	bios_ra
 
@@ -1136,6 +1151,7 @@ bios_conout:
 	ldx	#bc
 	jsr	phys_to_log
 	jsr	adm_out
+	jsr	place_cursor
 	jmp	dispatch
 out_bad:
 	lda	#3
@@ -1158,6 +1174,7 @@ stop_go:
 	jmp	warm_exit
 
 warm_exit:
+	jsr	cursor_off
 	lda	#0
 	tab
 	jmp	$0100
@@ -1244,13 +1261,16 @@ fn6:
 	cmp	#$fe
 	beq	f6st
 	jsr	adm_out
+	jsr	place_cursor
 	lda	#0
 	jmp	ret_a
 f6st:
-	ldx	#11
-	lda	#0
-	tay
-	jsr	pemcall
+	jsr	steal_ctrls
+	beq	f6sim
+	lda	#$ff
+	jmp	ret_a
+f6sim:
+	jsr	sim_const
 	cmp	#0
 	bne	f6nz
 	jmp	ret_a
@@ -1258,18 +1278,18 @@ f6nz:
 	lda	#$ff
 	jmp	ret_a
 f6in:
-	ldx	#11
-	lda	#0
-	tay
-	jsr	pemcall
+	jsr	steal_ctrls
+	beq	f6nok
+	ldx	#0
+	stx	hwpend
+	jmp	ret_a
+f6nok:
+	jsr	sim_const
 	cmp	#0
 	bne	f6key
 	jmp	ret_a
 f6key:
-	ldx	#6
-	lda	#0
-	tay
-	jsr	pemcall
+	jsr	sim_conin
 	jsr	mapkey
 	jmp	ret_a
 
@@ -2231,7 +2251,113 @@ sh4:
 	sec
 	sbc	#$60		; lowercase ASCII $61-$7A is screen code $01-$1A
 pc_store:
+	cmp	#$5e			; ASCII caret.  Screen code $5E is pi
+	bne	pc_put
+	lda	#$1e			; the up-arrow glyph, which has the caret shape
+pc_put:
 	sta	[qptr],z
+	rts
+
+; The colour byte's blink and reverse bits are already enabled by the ROM.
+; $D031 must not be written: it is a hot register, and a write makes the
+; video chip rebuild the screen address from the C64-style pointer.
+screen_on:
+	jsr	map_dma
+	lda	$d064
+	sta	col0
+	lda	$d065
+	sta	col1
+	jmp	map_dos
+
+; A is the row and Y is the column.  The colour byte for that cell is at
+; $FF80000 plus the colour pointer ($D064) plus the cell number.
+colour_ptr:
+	pha
+	lda	#0
+	sta	offh
+	pla
+	sta	offl
+	pha
+	ldx	#6
+cp64:
+	asl	offl
+	rol	offh
+	dex
+	bne	cp64
+	pla
+	sta	alo
+	lda	#0
+	sta	ahi
+	ldx	#4
+cp16:
+	asl	alo
+	rol	ahi
+	dex
+	bne	cp16
+	lda	offl
+	clc
+	adc	alo
+	sta	offl
+	lda	offh
+	adc	ahi
+	sta	offh
+	tya
+	clc
+	adc	offl
+	sta	qptr
+	lda	offh
+	adc	#0
+	sta	qptr1
+	lda	qptr
+	clc
+	adc	col0
+	sta	qptr
+	lda	qptr1
+	adc	col1
+	sta	qptr1
+	lda	#$f8
+	adc	#0
+	sta	qptr2
+	lda	#$0f
+	adc	#0
+	sta	qptr3
+	ldz	#0
+	rts
+
+place_cursor:
+	lda	curow
+	bmi	pc_set
+	lda	curow
+	ldy	cucol
+	jsr	colour_ptr
+	lda	cusav
+	sta	[qptr],z
+pc_set:
+	lda	srow
+	ldy	scol
+	jsr	colour_ptr
+	lda	[qptr],z
+	sta	cusav
+	ora	#$30
+	sta	[qptr],z
+	sta	curmark
+	lda	srow
+	sta	curow
+	lda	scol
+	sta	cucol
+	rts
+
+cursor_off:
+	lda	curow
+	bmi	co_x
+	lda	curow
+	ldy	cucol
+	jsr	colour_ptr
+	lda	cusav
+	sta	[qptr],z
+	lda	#$ff
+	sta	curow
+co_x:
 	rts
 
 ; ----- loader -------------------------------------------------------------
@@ -2991,12 +3117,14 @@ dma_copy_bios:
 	sta	dmalist+13
 	jmp	fire705
 
+; The 80 by 50 screen is 4000 bytes. 24 rows would leave the DOS/65
+; prompt on the rows below the guest's area.
 screen_clear:
 	lda	#3
 	sta	dmalist
-	lda	#$80
+	lda	#$a0
 	sta	dmalist+1
-	lda	#$07
+	lda	#$0f
 	sta	dmalist+2
 	lda	#$20
 	sta	dmalist+3
@@ -3098,6 +3226,66 @@ map_dma:
 	rts
 
 ; ----- PEM and messages ---------------------------------------------------
+; The hardware keyboard queue is $D610 (the character), $D619 (the Commodore
+; code) and $D60A (the modifiers stored with that key).  A write to $D619
+; removes the key.  Bit 7 of the modifier byte is set whenever the queue is
+; not empty, so it is masked off.  Value 4 is the control modifier alone.
+; HOME is also byte $13, but without that modifier, and is left for the ROM.
+steal_ctrls:
+	lda	hwpend
+	bne	steal_have
+	jsr	map_dma
+	lda	$d610
+	beq	steal_back
+	lda	$d619
+	cmp	#$13
+	bne	steal_back
+	lda	$d60a
+	and	#$7f
+	cmp	#$04
+	bne	steal_back
+	sta	$d619
+	lda	#$13
+	sta	hwpend
+steal_back:
+	jsr	map_dos
+steal_have:
+	lda	hwpend
+	rts
+
+; $0100 is JMP to the warm boot, which is SIM+3.  const is 3 bytes
+; further on, conin 6 bytes further on.
+sim_const:
+	lda	#3
+	bne	sim_ent
+sim_conin:
+	lda	#6
+sim_ent:
+	clc
+	adc	$0101
+	sta	sim_jsr+1
+	lda	$0102
+	adc	#0
+	sta	sim_jsr+2
+	tba
+	sta	absb
+	jsr	map_dos
+	lda	#0
+	tab
+	cli
+	jsr	sim_call
+	sei
+	sta	absa
+	lda	absb
+	tab
+	ldz	#0
+	lda	absa
+	rts
+sim_call:
+sim_jsr:
+	jsr	$ffff
+	rts
+
 pemcall:
 	sta	absa
 	sty	absy
@@ -3216,6 +3404,12 @@ fntab:
 runmode	.byte	0
 srow	.byte	0
 scol	.byte	0
+curow	.byte	$ff
+cucol	.byte	0
+hwpend	.byte	0
+cusav	.byte	0
+col0	.byte	0
+col1	.byte	0
 admst	.byte	0
 admsrow	.byte	0
 glyph	.byte	0
@@ -3246,6 +3440,8 @@ linbuf	.FILL	256 (0)
 tailtmp	.FILL	128 (0)
 wordbuf	.FILL	16 (0)
 dmalist	.FILL	16 (0)
+curmark	.byte	0
+curtag	.byte	$c5,$7e
 dcbcopy	.FILL	14 (0)
 dpbtmp	.FILL	16 (0)
 

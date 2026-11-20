@@ -36,7 +36,13 @@ def both(program: bytes, tail: str, *, files=None, script=b"", limit=2_000_000):
 def screen(machine) -> bytes:
     """The 80 by 24 grid as ASCII: screen codes $01-$1A are the lowercase letters."""
     raw = machine.bank(4)[SCREEN:SCREEN + SCREEN_BYTES]
-    return bytes(code + 0x60 if 1 <= code <= 0x1A else code for code in raw)
+    def decode(code):
+        if 1 <= code <= 0x1A:
+            return code + 0x60
+        if code == 0x1E:
+            return 0x5E          # the caret is stored as the up-arrow glyph
+        return code
+    return bytes(decode(code) for code in raw)
 
 
 def adm(stream: bytes) -> bytes:
@@ -137,6 +143,21 @@ def test_console_status_and_cursor_keys():
     ours, _cpm = both(program, "key", script=bytes([0x91, 0x11, 0x9D, 0x1D]))
     assert peek(ours, 0x200) == 0xFF
     assert [peek(ours, 0x201 + i) for i in range(4)] == [0x0B, 0x0A, 0x08, 0x0C]
+
+
+def test_startup_clears_the_screen_and_marks_the_cursor():
+    # One caret, then back to DOS/65.  Screen code $1E is the up-arrow glyph.
+    # curmark, just before the $C5 $7E tag, holds the blink and reverse attribute.
+    program = bytes([0x0E, 6, 0x1E, ord("^"), 0xCD, 0x05, 0x00, 0xC3, 0x00, 0x00])
+    ours, _cpm = both(bytes(program), "caret")
+    assert ours.exit_reason == "exit"
+    raw = ours.bank(4)[SCREEN:SCREEN + 80 * 50]
+    assert raw[0] == 0x1E
+    assert screen(ours)[0] == ord("^")
+    assert set(raw[1:]) == {0x20}
+    blob = bytes(ours.memory)
+    assert blob[blob.find(bytes([0xC5, 0x7E])) - 1] == 0x30
+    assert not ours.attic_fault
 
 
 def test_lowercase_letters_are_stored_as_lowercase_screen_codes():
@@ -271,6 +292,63 @@ def test_bios_console_through_the_copied_jump_target():
     assert peek(ours, 0x200) == 0xFF and cpm.mem[0x200] == 0xFF
     assert peek(ours, 0x202) == 0x0B
     assert mem(ours, 1) | mem(ours, 2) << 8 == 0xF203
+
+
+def test_control_s_is_returned_by_the_bios():
+    # PEM (the Primitive Execution Module) treats Control-S, byte $13, as
+    # freeze and never returns it.  WordStar's cursor left is that key, so
+    # the BIOS must read the SIM (System Interface Module) instead.
+    program = bytes([0xCD, 0x09, 0xF2, 0x32, 0x00, 0x02, 0xC3, 0x00, 0x00])
+    ours, _cpm = both(bytes(program), "ctl-s", script=b"\x13")
+    assert ours.exit_reason == "exit"
+    assert peek(ours, 0x200) == 0x13
+
+
+def _queue_key(machine, code: int, modifier: int) -> None:
+    """One key in the MEGA65 hardware queue: character, Commodore code, modifier."""
+    machine.io[0x610] = code
+    machine.io[0x619] = code
+    machine.io[0x60A] = modifier
+
+
+def test_control_s_is_taken_from_the_hardware_queue():
+    # The MEGA65 ROM reader dequeues byte $13 when the control modifier is
+    # present and then discards it.  Bit 7 of the modifier is set while the
+    # queue is not empty.  The BIOS has to take that key itself.
+    from bench.sim.dos65 import DOS65Machine
+
+    program = bytes([
+        0xCD, 0x06, 0xF2, 0x32, 0x00, 0x02,
+        0xCD, 0x09, 0xF2, 0x32, 0x01, 0x02,
+        0xC3, 0x00, 0x00,
+    ])
+    root = Path(tempfile.mkdtemp())
+    (root / "CTL-S.COM").write_bytes(program)
+    machine = DOS65Machine(root)
+    _queue_key(machine, 0x13, 0x84)
+    machine.load(COM, "ctl-s")
+    machine.run(2_000_000)
+    assert machine.exit_reason == "exit"
+    assert peek(machine, 0x200) == 0xFF
+    assert peek(machine, 0x201) == 0x13
+    assert machine.io[0x610] == 0
+
+
+def test_home_in_the_hardware_queue_is_left_for_the_rom():
+    # HOME is also byte $13, but the control modifier is clear, so the ROM
+    # returns it.  run8080 must not remove that key.
+    from bench.sim.dos65 import DOS65Machine
+
+    program = bytes([0xCD, 0x09, 0xF2, 0x32, 0x00, 0x02, 0xC3, 0x00, 0x00])
+    root = Path(tempfile.mkdtemp())
+    (root / "HOME.COM").write_bytes(program)
+    machine = DOS65Machine(root)
+    machine.console.input = bytearray(b"A")
+    _queue_key(machine, 0x13, 0x80)
+    machine.load(COM, "home")
+    machine.run(2_000_000)
+    assert peek(machine, 0x200) == ord("A")
+    assert machine.io[0x610] == 0x13
 
 
 def test_random_record_beyond_512_kb_returns_6():

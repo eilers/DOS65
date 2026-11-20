@@ -64,6 +64,14 @@ def _wr_abs(machine, addr: int, value: int) -> None:
         machine.note_speed(value)
         return
     if machine.io_mapped and 0xD000 <= addr <= 0xDFFF:
+        # A write to the hardware keyboard registers $D610 or $D619 pops the
+        # queued key.  The three bytes are the character, the Commodore code
+        # and the modifier that was held with it.
+        if addr in (0xD610, 0xD619):
+            machine.io[0x610] = 0
+            machine.io[0x619] = 0
+            machine.io[0x60A] = 0
+            return
         machine.io[addr - 0xD000] = value & 0xFF
         if addr == 0xD700:
             machine._dmagic(value)

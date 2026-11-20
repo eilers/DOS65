@@ -47,6 +47,7 @@ class DOS65Machine:
         self.dma_jobs: list[tuple] = []
         self.b = 0
         self.attic = bytearray(8192)
+        self.colour = bytearray(0x8000)   # MEGA65 colour RAM at $FF80000
         self.attic_fault = False
         self.speed = 0
         self.speed_log: list[int] = []
@@ -146,6 +147,9 @@ class DOS65Machine:
             return self.attic[off]
         if top == 0:
             return self.bank(bank & 0x0F)[off]
+        index = self._colour_index(addr)
+        if index is not None:
+            return self.colour[index]
         self.attic_fault = True
         return 0xFF
 
@@ -162,7 +166,18 @@ class DOS65Machine:
         if top == 0:
             self.bank(bank & 0x0F)[off] = value & 0xFF
             return
+        index = self._colour_index(addr)
+        if index is not None:
+            self.colour[index] = value & 0xFF
+            return
         self.attic_fault = True
+
+    @staticmethod
+    def _colour_index(addr: int):
+        """Byte index in colour RAM, which the MEGA65 maps at $FF80000."""
+        if 0x0FF80000 <= addr < 0x0FF88000:
+            return addr - 0x0FF80000
+        return None
 
     @staticmethod
     def _dma_addr(mb: int, bank: int, offset: int) -> int:
@@ -411,6 +426,7 @@ class DOS65Machine:
             mpu.x = 128
         elif offset == 51:
             pass
+        self._rts()
         self._set_nz(mpu.a)
         self._rts()
 
