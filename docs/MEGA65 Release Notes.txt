@@ -1,0 +1,132 @@
+DOS/65 FOR THE MEGA65
+Release notes, 20 November 2026
+
+Disk image: dos65_V2.19_Sim-1.01.D64
+
+This disk follows the previous Filehost release:
+https://files.mega65.org?id=0ce4be40-9fdd-4115-9d61-faf09510b161
+
+It is still DOS/65 version 2.19, the release that follows CP/M 2
+(Control Program for Microcomputers, version 2). The System Interface
+Module (SIM), the part of DOS/65 that talks to the keyboard and the
+drives, is still SIM 1.01. Mount the image as a 1541 disk and type:
+
+    boot
+
+
+What is new
+-----------
+
+RUN8080 is now on the disk. It runs an 8080 CP/M program. Disk and
+keyboard calls are handled by DOS/65, so a file the program writes is
+an ordinary DOS/65 file.
+
+The SIM reads two CP/M layouts on drives A and B.
+
+- A 1541 disk, which is the layout of this distribution.
+- A 1581 disk in the C128 CP/M layout. That is the 790 KB image usually
+  stored as a .d81 file. Put that disk in the second drive. The MEGA65
+  calls the second drive unit 9, and DOS/65 calls it B.
+
+The SIM looks at each drive once after a warm boot. It reads track 40,
+which only a 1581 disk has, and uses the Commodore header there to
+choose the layout. Insert or change a disk at the A> prompt, then press
+Control-C before using the drive again.
+
+DOS2CBM, CBM2DOS, and CBMDIR copy and list Commodore-format disks.
+The DOS/65 file is the one on the current drive. The number in the
+command is the Commodore unit, the device number of that disk,
+normally 8 or 9. It has to be the other drive. Drive A is unit 8
+and drive B is unit 9. The commands are described in "Commodore
+File Utilities.txt".
+
+
+Starting an 8080 program
+------------------------
+
+With the program disk in drive B:
+
+    run8080 b:sc2
+    run8080 b:ws
+
+The first word is the program name. RUN8080 adds .COM when the name has
+no extension. A drive letter and a colon are accepted. Text after the
+program name is passed to the program as a CP/M command tail.
+
+SuperCalc 2 and WordStar 4 are not on this disk. They stay on their own
+1581 disks. SuperCalc 2 draws as an ADM-3A terminal, and WordStar 4
+draws as an ADM-31 terminal. RUN8080 shows both on the MEGA65 screen of
+80 columns and 50 rows. A program installed for 24 lines still uses
+those 24 lines. Set the program's own screen height to 50 if it should
+use the rest. In SuperCalc that setting is in INSTALL. In WordStar it
+is HITE, under screen sizing in WSCHANGE.
+
+The MEGA65 cursor keys are translated into the cursor controls those
+programs already use. Control-S is delivered to the program, which is
+what WordStar uses for cursor left.
+
+
+What was checked
+----------------
+
+Under xemu, WordStar 4 opens, edits, and saves a file, and its screen is
+drawn, including Control-S as cursor left. SuperCalc 2 was compared with
+a CP/M model through the sign-on, loading SAMPLE.CAL, typing one cell,
+and saving, before the screen was extended from 24 rows to 50. After
+that change, cursor addressing, scrolling, and the erase-entry redraw
+were checked on the 50-row screen.
+
+The DOS/65 programs carried forward from the previous disk were tested
+then with MEGA65 ROM V920417 and V920420, and with core 0.97 (aaf4542).
+DOS2CBM, CBM2DOS, and CBMDIR are new on this disk and were not part
+of those checks.
+
+
+Programs on this disk
+---------------------
+
+- RUN8080, the 8080 emulator
+- ASM, the 6502 assembler
+- COMPILE and RUN, the BASIC-E compiler and its runtime
+- BASIC, Microsoft 9-digit BASIC. It is included and still does not run.
+- EDIT
+- MORE, PAGE, DUMP, ALLOC, COMPARE, DISKCOPY
+- DOS2CBM, CBM2DOS, and CBMDIR, the Commodore copy and directory
+  commands. See Commodore File Utilities.txt.
+- SYST212S.BAS and FLST217S.BAS, the sources for the status programs.
+  COMPILE SYST212S, then RUN SYST212S. COMPILE FLST217S, then
+  RUN FLST217S.
+
+DEBUG is still absent. SysGen is still absent, because this port does
+not load a new system image onto a disk.
+
+The command interpreter is unchanged:
+
+    DIR
+    REN <ufn> <ufn>
+    SAVE <length> <drive:>ufn (<address>)
+    ERA <afn>
+    TYPE d:ufn
+    LOAD <ufn> (<address>)
+    GO (<address>)
+
+
+Limits of RUN8080
+-----------------
+
+- A Z80 instruction stops the program. Turbo Pascal 3 uses those
+  instructions, so it will not run.
+- File calls and console calls are served. A program that drives the
+  disk, the printer, the reader, or the punch through the CP/M BIOS
+  (Basic Input/Output System) stops. WordStar's editing uses the calls
+  that are served.
+- Only user number 0 is accepted.
+- A file ends at 512 KB. DOS/65 stores at most 32 extents and has no
+  CP/M module number for a larger file.
+- The program may use memory from 0100 hex through DFFF hex. A write at
+  E000 hex or above stops it.
+- The screen understands the ADM-3A and ADM-31 sequences used by the
+  SuperCalc 2 and WordStar 4 installations named above. A program
+  installed for another terminal will not draw correctly.
+- A character written in column 80 wraps onto the next row. On row 50
+  that wrap scrolls the screen. WordStar can place a mark in column 80.

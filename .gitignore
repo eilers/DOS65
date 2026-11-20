@@ -2,6 +2,10 @@
 *.prg
 *.COM
 *.lst
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
 src/c65/disk
 src/c65/.history.txt
 src/zrun/lib6502

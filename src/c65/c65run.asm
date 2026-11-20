@@ -271,7 +271,18 @@ S_P	.byte	0	; Save Processor flags from Bank 5
 S_AXYZI	.byte	0,0,0,0	; Save A, X, Y, Z for Interrupts
 S_PI	.byte	0	; Save Processor flags from Bank 5 for Interrupts
 COPY_BUFFER
-	*= 	*+80
+	*= 	*+45		;names staged for SETNAM. 45 bytes covers
+				;a Commodore name plus ",S,W"
+; Read the kernel serial status. This sits in the bytes that used
+; to be spare room at the end of the copy buffer, so every bridge
+; address above, and End_Run at $23A4, stay where they are.
+; A program reaches it by calling READST ($FFB7). The SIM turns
+; that into a call here. The Commodore 64 kernal already lives at
+; $FFB7, so the same program works on both machines.
+_READST
+	SetKernalOnly(S_AXYZ, S_P)
+	JSR	READST		;status comes back in A
+	JMP	_RETURN		;A and the flags survive the bank switch
 End_Run 	
 
 ;-------------------------

@@ -293,9 +293,15 @@ cin2	cmp	#65		;see if < A
 	clc			;add 32
 	adc	#32		;to make lower case
 	bne	coninx		;and return that code
-;any remaining characters > 95 are ignored by following section
-;this may get changed in later versions
-cin3	cmp	#96		;see if > 95
+;any remaining characters > 95 are ignored by following section,
+;except the shifted cursor keys. Cursor down is 17 and cursor
+;right is 29, so they already fall through. Cursor up is 145
+;and cursor left is 157, and dropping them made those keys dead.
+cin3	cmp	#145		;cursor up
+	beq	coninx
+	cmp	#157		;cursor left
+	beq	coninx
+	cmp	#96		;see if > 95
 	bcs	conin		;if so loop for another
 ;any other character < 128 is then returned
 coninx	rts

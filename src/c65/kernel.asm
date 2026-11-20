@@ -1,5 +1,6 @@
 ; Kernel entry points
 CURSOR	=	$FF35		;enable (C=0) or disable (C=1) cursor
+READST	=	$FFB7		;serial status. Bit 6 is end of file
 SETLFS	=	$FFBA		;set LA, FA, SA
 SETNAM	=	$FFBD		;set length & file name address
 OPEN	=	$FFC0		;open logical file
@@ -24,8 +25,8 @@ _NMI_KERNEL	= $22c9
 _IRQ_KERNEL	= $22f9
 
 ; Exchange area for preserving interrupt related data
-IRQ_PF	= $fe77		; Processor flags for IRQ on Bank 5
-NMI_PF	= $fe7e		; Processor flags for NMI on Bank 5
+IRQ_PF	= $fe9b		; Processor flags for IRQ on Bank 5
+NMI_PF	= $fea2		; Processor flags for NMI on Bank 5
 
 ; Entrypoints SIM -> Transfer -> Kernel
 _CURSOR                 = $20f9
@@ -40,8 +41,9 @@ _BASIN			= $221e
 _BSOUT                  = $2241
 _GETIN			= $2264
 _CLALL			= $2287
+_READST			= $2381		;after the copy buffer, before End_Run
 
 ; Bridge copy buffer
 COPY_BUFFER             = $2354
 
-_INIT_AFTER_LOAD        = $fe04 ; Cold boot enry after initial load
+_INIT_AFTER_LOAD        = $fe28 ; Cold boot enry after initial load

@@ -35,6 +35,9 @@
 ;		added blank dcb table entries for drives 2-7 (c-h)
 ; 	4 april 2026
 ;		ported to the C65 (Mega65) by Stefan Eilers
+;	19 november 2026
+;		SIM 1.01: drives a and b also read the C128 CP/M 1581 format,
+;		increased to 12 pages
 
 .CPU  45GS02 
 
@@ -124,7 +127,7 @@ sysdef	.byte	8		;backspace
 iotype	.byte	1
 ;opening id message
 opnmsg	.byte	cr,lf,"Mega65 60K DOS/65 2.19 "
-	.byte	"SIM 1.00",0
+	.byte	"SIM 1.01",0
 ;cold entry from loader
 boot
 ;first clear all files and channels
@@ -150,6 +153,8 @@ setup	ldx	#0		;clear index
 ;first clear key dba & other variables
 	stx	hstact		;host buffer inactive
 	stx	unacnt		;clear unalloc count
+	stx	probed		;disks may have been changed
+	stx	probed+1
 setupl	lda	inttbl,x	;get byte
 	sta	$100,x		;insert at start
 	inx
@@ -244,10 +249,11 @@ cin2	cmp	#65		;see if < A
 	clc			;add 32
 	adc	#32		;to make lower case
 	bne	coninx		;and return that code
-;any remaining characters > 95 are ignored by following section
-;this may get changed in later versions
-cin3	cmp	#96		;see if > 95
-	bcs	conin		;if so loop for another
+;characters > 95 are ignored, except cursor up (145) and cursor
+;left (157). The test lives in cin_hi so this spot stays the same
+;length and the cold-boot entry stays at its fixed address.
+cin3	jmp	cin_hi
+	nop
 ;any other character < 128 is then returned
 coninx	rts
 ;console output of char in a
@@ -395,6 +401,13 @@ LADE	LDA	#4		;logical file 4
 ;	0 if drive not present
 seldsk	and	#7		;three lsbs only
 	sta	sekdsk		;save for later
+	cmp	#2		;only a and b exist
+	bcs	seldx
+	tax
+	lda	probed,x	;format known since warm boot?
+	bne	seldx		;yes
+	jsr	probe		;else ask the drive
+seldx	lda	sekdsk
 	asl	a		;multiply by two
 	tax			;make an undex
 	lda	dcbtbl,x	;get address
@@ -720,13 +733,19 @@ writeh	jsr	hcom		;setup params
 ;	one and if track is 18 or more it is increased by one
 ;	more to skip directory track
 ;1541 sector numbers go from 0 to 16
-hcom	lda	hstdsk		;get disk number
+;The 1581 format is the one of C128 CP/M: a dos/65 track is one half of a
+;1581 track (sectors 0-19 or 20-39), there are no system tracks, and half
+;track 78 (sectors 0-19 of track 40) holds the CBM header and directory.
+hcom	ldx	hstdsk		;get disk number
+	txa
 ;now calculate device number
 	clc			;by adding "8"
 	adc	#8		;to drive number
 	sta	device
-;ignore high byte of track and sector for 1541
+;ignore high byte of track and sector
 	lda	hsttrk
+	ldy	fmttbl,x	;1581 disk?
+	bne	hc1581
 	sta	phytrk
 	inc	phytrk		;bump track by one
 	lda	phytrk		;now check for 18
@@ -736,6 +755,70 @@ hcom	lda	hstdsk		;get disk number
 nobump	lda	hstsec		;then sector
 	sta	physec
 	rts			;done
+hc1581	cmp	#78		;skip the cbm half track
+	bcc	hc81a
+	adc	#0		;c=1 so 78-->79 etc
+hc81a	lsr	a		;1581 track - 1, c = second half
+	sta	phytrk
+	inc	phytrk		;bump track by one
+	lda	hstsec
+	bcc	hc81b		;first half: sectors 0-19
+	adc	#19		;c=1 so sector + 20
+hc81b	sta	physec
+	rts
+;find out whether drive x (0 or 1) holds a 1541 or a 1581 disk and
+;point its dcb at the matching table. Only a 1581 disk has track 40, and
+;its sector 0 there is the CBM header with format 'D' in byte 2.
+;The host buffer is not touched.
+probe	inc	probed,x	;probe once per warm boot
+	txa
+	cmp	lstdrv		;channels open to this drive?
+	beq	prbtrk		;yes
+	sta	lstdrv		;else reopen them
+	clc
+	adc	#8
+	sta	device
+	jsr	LB97
+prbtrk	lda	#40		;track 40, sector 0
+	sta	phytrk
+	lda	#0
+	sta	physec
+	ldy	#1		;a single try: a 1541 disk has no track 40
+	lda	#'1'		;block read
+	jsr	LAF2T
+	bne	prb41		;error, so not a 1581 disk
+	jsr	LBDE		;read from channel 2
+	jsr	BASIN		;skip link track
+	jsr	BASIN		;and link sector
+	jsr	BASIN		;get disk format
+	pha
+	jsr	CLRCH		;restore default channel
+	pla
+	cmp	#'D'		;1581?
+	bne	prb41
+	lda	#2		;format 2 = 1581
+	bne	prbset		;always
+prb41	lda	#0		;format 0 = 1541
+prbset	ldx	sekdsk
+	sta	fmttbl,x
+	asl	a		;records per block:
+	asl	a		;8 for 1541, 16 for 1581
+	adc	#8
+	sta	rbltbl,x
+	txa			;dcb index = (drive + format) * 2
+	adc	fmttbl,x
+	asl	a
+	tay
+	txa
+	asl	a
+	tax
+	lda	dcbsrc,y	;set dcb address for seldsk
+	sta	dcbtbl,x
+	lda	dcbsrc+1,y
+	sta	dcbtbl+1,x
+	rts
+;dcb addresses by format: 1541 a, 1541 b, 1581 a, 1581 b
+dcbsrc	.word	dcba,dcbb,dcba8,dcbb8
 ;following section contains core C64 I/O routines
 ;change drive by sensing new drive and then closing 15 & 2
 ;and then reopening 15 & 2 with new device number
@@ -789,7 +872,9 @@ LA76	LDA	HSTBUF,X	;get byte from buffer
 ;set up user mode
 ;error return: a=$ff & z=0 else a=0 & z=1
 ;returns: a
-LAF2	STA	LB62+1		;save "1" or "2" for mode
+LAF2	LDY	#2		;2 tries
+;enter here with y = number of tries
+LAF2T	STA	LB62+1		;save "1" or "2" for mode
 	LDA	phytrk		;now get track number
 	JSR	LB89		;convert to ASCII
 	STX	LB62+7		;and store in string
@@ -798,8 +883,7 @@ LAF2	STA	LB62+1		;save "1" or "2" for mode
 	JSR	LB89		;convert to ASCII
 	STX	LB62+10		;and store in string
 	STA	LB62+11
-	LDA	#2		;set DATA for 2 tries
-	STA	DATA
+	STY	DATA		;set DATA for y tries
 LB1B	JSR	LBF4		;set up command channel
 	LDY	#13		;string is 13 characters
 LB20	LDA	LB62,X		;get character and
@@ -902,7 +986,7 @@ LBF4	LDX	#15		;LA 15 for command channel
 	LDX	#0		;x = 0 to start transfer after RTS
 	RTS
 ;disk control blocks
-;both for C64 1541
+;C64 1541 format
 ;drive a
 dcba	.word	135		;max block number
 	.word	34		;records per track
@@ -919,6 +1003,25 @@ dcbb	.word	135		;max block number
 	.byte	0		;block size = 1024
 	.word	63		;max directory number
 	.word	almpb		;address of map for a
+	.byte	0		;do checksums
+	.word	ckmpb		;checksum map
+;C128 CP/M 1581 format: 159 tracks of 5 KB, 2 KB blocks, 128 entries
+;drive a
+dcba8	.word	396		;max block number
+	.word	40		;records per track
+	.word	0		;number system tracks
+	.byte	1		;block size = 2048
+	.word	127		;max directory number
+	.word	almpa		;address of map for a
+	.byte	0		;do checksums
+	.word	ckmpa		;checksum map
+;drive b
+dcbb8	.word	396		;max block number
+	.word	40		;records per track
+	.word	0		;number system tracks
+	.byte	1		;block size = 2048
+	.word	127		;max directory number
+	.word	almpb		;address of map for b
 	.byte	0		;do checksums
 	.word	ckmpb		;checksum map
 ;data area
@@ -977,20 +1080,24 @@ phytrk				;physical  track
 	*=	*+2
 physec				;physical sector
 	*=	*+2
-;allocation maps
+probed				;<>0 if format of drive a, b known
+	*=	*+2
+fmttbl				;format of drive a, b: 0=1541, 2=1581
+	*=	*+2
+;allocation maps, sized for the 1581 format (397 blocks)
 ;drive a
 almpa
-	*=	*+17
+	*=	*+50
 ;drive b
 almpb
-	*=	*+17
-;checksum maps
+	*=	*+50
+;checksum maps, sized for the 1581 format (128 entries)
 ;drive a
 ckmpa
-	*=	*+16
+	*=	*+32
 ;drive b
 ckmpb
-	*=	*+16
+	*=	*+32
 ;deblocking buffer for dba
 hstbuf
 	*=	*+256		;256 byte sectors
@@ -1134,20 +1241,16 @@ _INIT_AFTER_LOAD
 ; Fast copy bytes into copy buffer.
 ; A: Length
 ; X: SRC Address Low
-; Y; SRC Address High
+; Y: SRC Address High
+; The work moved to CPYGO, in the spare room before the kernel
+; jump table, so this spot stays 27 bytes and the DMA list below
+; stays at $FE63. A length of 0 must not reach that list: a DMA
+; count of 0 copies 65536 bytes. An empty command-channel name
+; is a length of 0, and the kernel is still called with that 0.
 COPY_TO_COPY_BUFFER
-	STA	CPYLEN		; Only low byte required
-	STX	CPYSRL
-	STY	CPYSRH
-	PHA			; Protect the length
-	LDA	#$05		; DMA list exists in Bank 0
-	STA	$D702
-	LDA	#>CPY_DMA_CTL_DATA
-	STA	$D701
-	LDA	#<CPY_DMA_CTL_DATA
-	STA	$D700		; Execute copy via DMS
-	PLA			; Restore length
+	JSR	CPYGO
 	RTS
+	*=	*+23			;keep CPY_DMA_CTL_DATA at $FE63
 CPY_DMA_CTL_DATA
 	.byte	$00			; Command low byte: COPY
 CPYLEN	.word	0 			; How many bytes
@@ -1197,6 +1300,45 @@ NMI_PF	.byte	0	; Store Processor register for NMI
 NMI_PC	.word	0	; Stores IRQ return address for NMI
 NMI_QADDR .byte	0,0,0,0	; Stores A,X,Y,Z for NMI
 
+;console input continued. Placed after the fixed SIM data so the
+;cold-boot entry and the IRQ save area stay at their addresses.
+;Cursor down (17) and cursor right (29) are below 96 and already
+;returned. Cursor up and cursor left are not.
+cin_hi	cmp	#145		;cursor up
+	beq	cin_yes
+	cmp	#157		;cursor left
+	beq	cin_yes
+	cmp	#96		;see if > 95
+	bcs	cin_no
+cin_yes	jmp	coninx
+cin_no	jmp	conin
+
+; End of file and device errors. Reading or writing a byte does not
+; say that the drive has finished, so a copy asks for the status.
+; This lives in the spare room before the kernel jump table, so the
+; cold-boot entry at $FE28 does not move.
+_READST_S
+	JSR	_SetBank5WithBridge
+	JSR	_READST
+	JMP	_RETURN_S
+
+; Name copy for SETNAM. Lives here so the original copy routine
+; can stay the same size. See COPY_TO_COPY_BUFFER.
+CPYGO	CMP	#0			;length 0 would DMA 65536 bytes
+	BEQ	CPYZ
+	STA	CPYLEN			;low byte only, high byte stays 0
+	STX	CPYSRL
+	STY	CPYSRH
+	PHA				;SETNAM still needs the length
+	LDA	#$05			;DMA list is in bank 5
+	STA	$D702
+	LDA	#>CPY_DMA_CTL_DATA
+	STA	$D701
+	LDA	#<CPY_DMA_CTL_DATA
+	STA	$D700			;copy the name into the bridge
+	PLA
+CPYZ	RTS
+
 ; --------------------------------------
 ; Mapping of Mega65 Kernel calls to 
 ; bridge calls. These bridge calls will 
@@ -1205,6 +1347,8 @@ NMI_QADDR .byte	0,0,0,0	; Stores A,X,Y,Z for NMI
 ; --------------------------------------
 	*= CURSOR
 	JMP	_CURSOR_S
+	*= READST
+	JMP	_READST_S
 	*= SETLFS
 	JMP	_SETLFS_S
 	*= SETNAM
