@@ -45,8 +45,8 @@ Copy one file from the Commodore disk onto the current DOS/65 drive.
     A>CBM2DOS 9 MY LONG FILE.BAS
 
 This reads MY LONG FILE.BAS from unit 9 and writes MYLONGFI.BAS on
-drive A. An empty Commodore file is created on the DOS/65 drive and
-no record is written.
+drive A. A file that was closed with nothing written is returned by
+the kernel as one carriage return, and that byte is copied.
 
 
 cbmdir

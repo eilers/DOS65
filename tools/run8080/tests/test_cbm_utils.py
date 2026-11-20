@@ -3,12 +3,17 @@
 The Primitive Execution Module (PEM) is DOS/65's call gate at $103.
 The kernel is the Commodore ROM: open, read, write, and the status
 byte. READST is that status. Bit 6 ($40) is raised on the last real
-byte of a file, so the byte is kept. The next read, and the first
-read of an empty file, comes back as $42 (end of file and the read
-timeout together) and that byte is not data.
+byte of a file, so the byte is kept. The kernel's next answer is a
+carriage return with that bit still set, and it is not another file
+byte. A file closed with nothing written is that same carriage
+return: status is clear beforehand, and the one byte arrives with
+bit 6 set.
 
-A Commodore directory line already contains the spaces that line the
-names up, counted for a block count printed as digits and one space.
+A directory line from the MEGA65 disk carries the spaces that put
+the opening quote in one column and the file type in another, once
+the block count is printed as digits and one space. The type of a
+sequential file is SEQ. The free-space line says BLOCKS FREE with
+no period after it.
 """
 
 from __future__ import annotations
@@ -99,7 +104,7 @@ class CommodoreMachine:
         self._input = None
         self._output = None
         self._status = 0
-        self._error = b"00, OK,00,00\r"
+        self._error = b"00,OK,00,00\r"
         self._error_at = 0
         self._cmd = bytearray()
         self._dma = 0
@@ -261,23 +266,25 @@ class CommodoreMachine:
         elif self._sa == SA_DIR:
             self._dir = _directory(self.cbm, self.blocks)
             self._data_at = 0
-            self._error = b"00, OK,00,00\r"
+            self._error = b"00,OK,00,00\r"
         elif self._name.endswith(b",S,W"):
             base = self._name[:-4].decode("ascii")
             if base in self.cbm:
-                self._error = b"63, FILE EXISTS,00,00\r"
+                self._error = b"63,FILE EXISTS,00,00\r"
             else:
                 self.cbm[base] = bytearray()
                 self._writes = 0
-                self._error = b"00, OK,00,00\r"
+                self._error = b"00,OK,00,00\r"
         else:
             base = self._name.decode("ascii")
             self._data_at = 0
             if base in self.cbm:
-                self._error = b"00, OK,00,00\r"
+                self._error = b"00,OK,00,00\r"
             else:
-                self._error = b"62, FILE NOT FOUND,00,00\r"
-        self.mpu.a = 0
+                self._error = b"62,FILE NOT FOUND,00,00\r"
+        # A successful open leaves A holding the last character of
+        # the name. The programs only look at A when carry is set.
+        self.mpu.a = self._name[-1] if self._name else 0
         self._carry(False)
 
     def _close(self):
@@ -288,13 +295,18 @@ class CommodoreMachine:
         self.mpu.a = 0
 
     def _chkin(self):
+        # Selecting a channel starts a new transfer. The kernel's
+        # status, including an end bit left by the error channel,
+        # is clear again. Measured after CHKIN in xemu.
         self._input = self.mpu.x
+        self._status = 0
         if self.mpu.x == LF_CMD:
             self._error_at = 0
         self._carry(False)
 
     def _ckout(self):
         self._output = self.mpu.x
+        self._status = 0
         if self.mpu.x == LF_CMD:
             self._cmd = bytearray()
         self._carry(False)
@@ -307,16 +319,20 @@ class CommodoreMachine:
         if self._input == LF_CMD:
             if self._error_at >= len(self._error):
                 self.mpu.a = 0x0D
-                self._status = 0x42
+                self._status = 0x40
             else:
                 self.mpu.a = self._error[self._error_at]
                 self._error_at += 1
-                self._status = 0
+                # The carriage return that ends the message arrives
+                # with the end bit set. The bytes before it do not.
+                self._status = 0x40 if self.mpu.a == 0x0D else 0
             return
         data = self._dir if self._sa == SA_DIR else self._open_data()
         if self._data_at >= len(data):
+            # No byte left. An empty file takes this path on the
+            # first read: one carriage return, end bit set.
             self.mpu.a = 0x0D
-            self._status = 0x42
+            self._status = 0x40
             return
         self.mpu.a = data[self._data_at]
         self._data_at += 1
@@ -341,7 +357,7 @@ class CommodoreMachine:
                 self.commands.append(text)
                 if text.startswith("S0:"):
                     self.cbm.pop(text[3:].rstrip("\r"), None)
-                    self._error = b"01, FILES SCRATCHED,01,00\r"
+                    self._error = b"01,FILES SCRATCHED,01,00\r"
             self._status = 0
             return
         name = self._name[:-4].decode("ascii")
@@ -376,22 +392,31 @@ def _spaces(blocks: int) -> int:
     return 0
 
 
-def _file_text(blocks: int, name: str, kind: str = "PRG") -> bytes:
-    padded = name.encode("ascii") + bytes([0xA0]) * (16 - len(name))
-    return bytes([0x20] * _spaces(blocks)) + b'"' + padded + b'" ' + kind.encode("ascii")
+def _file_text(blocks: int, name: str, kind: str = "SEQ") -> bytes:
+    # The printed block count plus one space, then this text, puts
+    # the opening quote at column 5 and the file type at column 24.
+    digits = len(str(blocks))
+    text = bytearray(b" " * 27)
+    quote = 5 - (digits + 1)
+    text[quote:quote + 2 + len(name)] = b'"' + name.encode("ascii") + b'"'
+    kind_at = 24 - (digits + 1)
+    text[kind_at:kind_at + len(kind)] = kind.encode("ascii")
+    return bytes(text)
 
 
 def _line(blocks: int, text: bytes) -> bytes:
-    return bytes([0x01, 0x01, blocks & 0xFF, blocks >> 8]) + text + bytes([0])
+    return bytes([0x44, 0x4A, blocks & 0xFF, blocks >> 8]) + text + bytes([0])
 
 
 def _directory(files: dict, blocks: dict) -> bytes:
-    image = bytearray([0x01, 0x04])
-    image += _line(0, bytes([0x12]) + b'"DISK NAME" 01 2A')
+    # Load address, then BASIC lines. The two address bytes are not
+    # printed. The header name is padded out to 16 characters.
+    image = bytearray([0x46, 0x52])
+    image += _line(0, bytes([0x12]) + b'"DISK NAME       " 01 2A')
     for name in files:
         count = blocks.get(name, 1)
         image += _line(count, _file_text(count, name))
-    image += _line(1055, b"BLOCKS FREE.")
+    image += _line(1055, b"BLOCKS FREE" + b" " * 14)
     image += bytes([0x00, 0x00])
     return bytes(image)
 
@@ -423,12 +448,12 @@ def test_cbmdir_lines_the_names_up(programs):
     lines = [line for line in machine.text.splitlines() if line]
     assert lines[0] == "CBMDIR UNIT 9"
     header = next(line for line in lines if "DISK NAME" in line)
-    files = [line for line in lines if line.endswith("PRG")]
+    files = [line for line in lines if "SEQ" in line]
     assert header.index('"') < files[0].index('"')
     assert len({line.index('"') for line in files}) == 1
-    assert len({line.index('"', line.index('"') + 1) for line in files}) == 1
-    assert len({line.index("PRG") for line in files}) == 1
-    assert any(line.startswith("1055 ") and "BLOCKS FREE." in line for line in lines)
+    assert len({line.index("SEQ") for line in files}) == 1
+    assert any(line.startswith("1055 ") and "BLOCKS FREE" in line for line in lines)
+    assert "BLOCKS FREE." not in "\n".join(lines)
 
 
 def test_cbmdir_rejects_a_bad_command(programs):
@@ -487,7 +512,7 @@ def test_cbm2dos_keeps_the_last_byte_and_pads_the_short_record(programs):
 
 def test_cbm2dos_empty_file_and_an_exact_record(programs):
     empty = _machine(programs, "CBM2DOS", " 9 EMPTY.SEQ", cbm={"EMPTY.SEQ": b""})
-    assert empty.dos[b"EMPTY   SEQ"] == []
+    assert _records(empty, b"EMPTY   SEQ") == bytes([0x0D]) + bytes([CTZ]) * 127
     assert "COPIED" in empty.text
 
     exact = bytes([0x5A]) * RECORD

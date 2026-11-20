@@ -30,9 +30,10 @@
 ;Reading a byte does not by itself say that the file has ended.
 ;The kernel's status byte has to be read after the byte. Bit 6
 ;means end of file, and the kernel raises it on the last real
-;byte, so that byte is kept. The next read has the read-timeout
-;bit set as well, and the byte that comes with it is not data.
-;That status entry is READST at $FFB7.
+;byte, so that byte is kept. The kernel's next read is not another
+;file byte: it is a carriage return, and bit 6 stays set. Calling
+;the read again after that, or selecting the channel again, is
+;not data either. That status entry is READST at $FFB7.
 
 ;kernel entries. Same numbers on a Commodore 64 and a MEGA65.
 readst	=	$ffb7		;serial status. Bit 6 is end of file
@@ -92,6 +93,7 @@ ndig	=	32		;how many digits the unit number had
 idx	=	33		;a loop count that has to survive a kernel call
 tmp	=	34
 tmp2	=	35
+past	=	36		;nonzero once the end-of-file byte was returned
 
 ;---- command tail -----------------------------------------------
 ;A = 0 to read only the unit, A = 1 to read the unit and a name.
@@ -399,6 +401,8 @@ cbmcmd	lda	#lfcmd
 ;Open cbmnam. A is the secondary address on entry:
 ;3 for file bytes, 0 for the directory.
 cbmopen	sta	tmp
+	lda	#0
+	sta	past		;this open has not returned an end byte yet
 	lda	#lfdat
 	ldx	unit
 	ldy	tmp
@@ -500,29 +504,43 @@ pr3	jsr	crlf
 	rts
 
 ;One byte from the Commodore file.
-;Carry clear: the byte is in A. Status $40 is included here,
-;because that is the last real byte and not a marker after it.
-;Carry set and A = 0: nothing more to read. The kernel answers
-;the following read, and the first read of an empty file, with
-;end of file and the read timeout together ($42).
+;Carry clear: the byte is in A. The byte that arrives with status
+;$40 is the last real byte, so it is included.
+;Carry set and A = 0: nothing more to read. The kernel answers a
+;further read with a carriage return and leaves status at $40.
+;Selecting the channel again clears that status, and the read
+;after that is a timeout, not a file byte. Either one is the end.
 ;Carry set and A nonzero: the status itself, a real fault.
 ;Uses tmp and tmp2. Does not use hold, reclen, or the block count.
-cbmin	jsr	basin
+cbmin	lda	past
+	bne	cindone		;the end byte was already returned
+	jsr	readst
+	and	#$40
+	bne	cindone		;status already says the file has ended
+	jsr	basin
 	sta	tmp
 	jsr	readst
 	sta	tmp2
 	and	#$bf		;ignore the end-of-file bit
 	beq	cingood		;0 or $40: the byte is file data
 	cmp	#$02
-	bne	cinbad		;a fault other than the past-the-end read
+	bne	cinbad		;a timeout on its own, before the end, is a fault
 	lda	tmp2
 	and	#$40
-	beq	cinbad		;a timeout on its own is a fault
-	lda	#0		;end of file together with the read timeout
+	beq	cinbad
+	lda	#0		;end of file and the timeout together
 	sec
 	rts
-cingood	lda	tmp
+cingood	lda	tmp2
+	and	#$40
+	beq	cinbyte
+	lda	#1
+	sta	past		;do not read the carriage return that follows
+cinbyte	lda	tmp
 	clc
+	rts
+cindone	lda	#0
+	sec
 	rts
 cinbad	lda	tmp2
 	sec
