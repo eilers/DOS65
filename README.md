@@ -111,11 +111,11 @@ The first command reads `MYLONGFI.BAS` from drive A and writes `MY LONG FILE.BAS
 I strongly recommend that you switch to the drive where the program you want to run is located. Otherwise the program will access the wrong disk. For instance: `run8080` is on drive `a:` and the program to execute is on drive `b:` : 
 
 ```bash
-cd b:
-a:run8080 <program> [arguments]
+A>b:
+B>a:run8080 <program> [arguments]
 ```
 
-`prgrogram` is the program name. `.COM` is added when you do not type an extension. The arguments are passed to the program you want to run.
+`program` is the program name. `.COM` is added when you do not type an extension. The arguments are passed to the program you want to run.
 
 # How to build
 
