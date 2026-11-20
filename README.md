@@ -62,6 +62,9 @@ This distribution comes as a hybrid D64 image that contains the following softwa
   * DISKCOPY
   * DUMP
   * PAGE
+  * DOS2CBM (copy a DOS/65 file onto a Commodore disk)
+  * CBM2DOS (copy a Commodore file onto the current DOS/65 drive)
+  * CBMDIR (list a Commodore disk)
 * Not yet included (Not working for now. Pull requests are welcome!)
   * DEBUG
 

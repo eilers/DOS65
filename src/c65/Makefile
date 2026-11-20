@@ -77,7 +77,10 @@ ASM_FILES = MORE202.ASM \
             ALLOC208.ASM \
             DISKC205.ASM \
             DUMP100.ASM \
-            PAGE100.ASM
+            PAGE100.ASM \
+            DOS2CBM.ASM \
+            CBM2DOS.ASM \
+            CBMDIR.ASM
             #DEBUG204.ASM \
             MON1002.ASM \
             HXCOM200.ASM \

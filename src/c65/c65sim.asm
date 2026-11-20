@@ -1241,20 +1241,16 @@ _INIT_AFTER_LOAD
 ; Fast copy bytes into copy buffer.
 ; A: Length
 ; X: SRC Address Low
-; Y; SRC Address High
+; Y: SRC Address High
+; The work moved to CPYGO, in the spare room before the kernel
+; jump table, so this spot stays 27 bytes and the DMA list below
+; stays at $FE63. A length of 0 must not reach that list: a DMA
+; count of 0 copies 65536 bytes. An empty command-channel name
+; is a length of 0, and the kernel is still called with that 0.
 COPY_TO_COPY_BUFFER
-	STA	CPYLEN		; Only low byte required
-	STX	CPYSRL
-	STY	CPYSRH
-	PHA			; Protect the length
-	LDA	#$05		; DMA list exists in Bank 0
-	STA	$D702
-	LDA	#>CPY_DMA_CTL_DATA
-	STA	$D701
-	LDA	#<CPY_DMA_CTL_DATA
-	STA	$D700		; Execute copy via DMS
-	PLA			; Restore length
+	JSR	CPYGO
 	RTS
+	*=	*+23			;keep CPY_DMA_CTL_DATA at $FE63
 CPY_DMA_CTL_DATA
 	.byte	$00			; Command low byte: COPY
 CPYLEN	.word	0 			; How many bytes
@@ -1317,6 +1313,32 @@ cin_hi	cmp	#145		;cursor up
 cin_yes	jmp	coninx
 cin_no	jmp	conin
 
+; End of file and device errors. Reading or writing a byte does not
+; say that the drive has finished, so a copy asks for the status.
+; This lives in the spare room before the kernel jump table, so the
+; cold-boot entry at $FE28 does not move.
+_READST_S
+	JSR	_SetBank5WithBridge
+	JSR	_READST
+	JMP	_RETURN_S
+
+; Name copy for SETNAM. Lives here so the original copy routine
+; can stay the same size. See COPY_TO_COPY_BUFFER.
+CPYGO	CMP	#0			;length 0 would DMA 65536 bytes
+	BEQ	CPYZ
+	STA	CPYLEN			;low byte only, high byte stays 0
+	STX	CPYSRL
+	STY	CPYSRH
+	PHA				;SETNAM still needs the length
+	LDA	#$05			;DMA list is in bank 5
+	STA	$D702
+	LDA	#>CPY_DMA_CTL_DATA
+	STA	$D701
+	LDA	#<CPY_DMA_CTL_DATA
+	STA	$D700			;copy the name into the bridge
+	PLA
+CPYZ	RTS
+
 ; --------------------------------------
 ; Mapping of Mega65 Kernel calls to 
 ; bridge calls. These bridge calls will 
@@ -1325,6 +1347,8 @@ cin_no	jmp	conin
 ; --------------------------------------
 	*= CURSOR
 	JMP	_CURSOR_S
+	*= READST
+	JMP	_READST_S
 	*= SETLFS
 	JMP	_SETLFS_S
 	*= SETNAM

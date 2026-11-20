@@ -33,6 +33,13 @@ which only a 1581 disk has, and uses the Commodore header there to
 choose the layout. Insert or change a disk at the A> prompt, then press
 Control-C before using the drive again.
 
+DOS2CBM, CBM2DOS, and CBMDIR copy and list Commodore-format disks.
+The DOS/65 file is the one on the current drive. The number in the
+command is the Commodore unit, the device number of that disk,
+normally 8 or 9. It has to be the other drive. Drive A is unit 8
+and drive B is unit 9. The commands are described in "Commodore
+File Utilities.txt".
+
 
 Starting an 8080 program
 ------------------------
@@ -71,6 +78,8 @@ were checked on the 50-row screen.
 
 The DOS/65 programs carried forward from the previous disk were tested
 then with MEGA65 ROM V920417 and V920420, and with core 0.97 (aaf4542).
+DOS2CBM, CBM2DOS, and CBMDIR are new on this disk and were not part
+of those checks.
 
 
 Programs on this disk
@@ -82,6 +91,8 @@ Programs on this disk
 - BASIC, Microsoft 9-digit BASIC. It is included and still does not run.
 - EDIT
 - MORE, PAGE, DUMP, ALLOC, COMPARE, DISKCOPY
+- DOS2CBM, CBM2DOS, and CBMDIR, the Commodore copy and directory
+  commands. See Commodore File Utilities.txt.
 - SYST212S.BAS and FLST217S.BAS, the sources for the status programs.
   COMPILE SYST212S, then RUN SYST212S. COMPILE FLST217S, then
   RUN FLST217S.

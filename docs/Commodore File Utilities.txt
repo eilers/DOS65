@@ -1,0 +1,128 @@
+COMMODORE FILE UTILITIES
+
+DOS/65 is the disk system these commands run under. It keeps its own
+files on the drive you are logged into. The A> prompt is drive A, which
+is Commodore unit 8. The B> prompt is drive B, unit 9. A Commodore unit
+is the device number a Commodore program would use in an OPEN, normally
+8 or 9.
+
+The number you type in these commands is a second disk, in Commodore
+format. That is a D64 image (the 1541 layout) or a D81 image (the 1581
+layout), or a real drive of either kind. It has to be the unit DOS/65
+is not using. Each drive has one command channel, and DOS/65 already
+holds the channel of its own drive. At the A> prompt, the Commodore
+disk is unit 9. At the B> prompt, it is unit 8.
+
+Insert or change a disk at the A> prompt, then press Control-C before
+using that drive again.
+
+The command line is folded to upper case by the Console Command Module
+before a program starts. A name is stored in capitals even when it was
+typed in lower case.
+
+
+dos2cbm
+-------
+
+Copy one file from the current DOS/65 drive onto the Commodore disk.
+The new file is always a sequential file.
+
+    DOS2CBM <unit> <filename>
+
+    A>DOS2CBM 9 MY LONG FILE.BAS
+
+This reads MYLONGFI.BAS from drive A and writes MY LONG FILE.BAS on
+unit 9.
+
+
+cbm2dos
+-------
+
+Copy one file from the Commodore disk onto the current DOS/65 drive.
+
+    CBM2DOS <unit> <filename>
+
+    A>CBM2DOS 9 MY LONG FILE.BAS
+
+This reads MY LONG FILE.BAS from unit 9 and writes MYLONGFI.BAS on
+drive A. An empty Commodore file is created on the DOS/65 drive and
+no record is written.
+
+
+cbmdir
+------
+
+List every file on the Commodore disk. There is no name pattern.
+
+    CBMDIR <unit>
+
+    A>CBMDIR 9
+
+Each line is a block count and then the text the drive sent, including
+the name and the file type.
+
+
+Names
+-----
+
+One name is typed. On the Commodore disk it is kept as typed, spaces
+included, up to 16 characters. A longer name is rejected. On the DOS/65
+disk the spaces are removed, and the name is cut to 8 characters before
+the first dot and 3 characters after it.
+
+    MY LONG FILE.BAS
+
+is MY LONG FILE.BAS on the Commodore disk and MYLONGFI.BAS on the
+DOS/65 disk. A name that is empty once the spaces are removed is
+rejected. A comma, a colon, an asterisk, or a question mark in the
+name is rejected, so the command cannot be turned into a wildcard or
+into a different file.
+
+
+What is copied
+--------------
+
+Every byte is copied, including the two-byte load address at the front
+of a Commodore program file.
+
+DOS/65 stores a file as records of 128 bytes. dos2cbm writes every byte
+of every record, so the Commodore file ends on a 128-byte boundary.
+The file is created as a sequential file. Copying it back with cbm2dos
+therefore produces a DOS/65 file whose bytes still start with that load
+address, and a later dos2cbm of that file is sequential again even when
+the original Commodore file was a program file.
+
+cbm2dos fills a short final record with Ctrl-Z, the byte 1A hex. A
+file whose length is already a multiple of 128 is written as it is.
+dos2cbm does not strip those bytes: a record is copied whole.
+
+
+Files that are already there
+----------------------------
+
+If the destination already exists, on either disk, the command stops
+and prints FILE EXISTS. The existing file is left as it was.
+
+If a copy fails after the new file has been created, that new file is
+removed. The file that was being read is left as it was. A failed copy
+can be started again with the same name.
+
+
+Messages
+--------
+
+BAD COMMAND       the unit is missing, or cbmdir has extra text
+BAD DEVICE        the unit is not a number from 8 to 30
+BAD FILE NAME     the name is empty, too long, or contains , : * ?
+FILE NOT FOUND    the file to be read is not on that disk
+FILE EXISTS       the destination is already there
+NO ROOM           the DOS/65 disk has no directory space
+DISK FULL         the DOS/65 disk filled up while writing
+DEVICE NOT PRESENT
+                  nothing answered at that unit
+CANNOT OPEN       the drive rejected the open
+DRIVE ERROR       the drive gave no text of its own
+COPIED            the copy finished
+
+A drive can also print its own message, such as a write-protect error.
+That text is shown as the drive sent it.

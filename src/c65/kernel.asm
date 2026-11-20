@@ -1,5 +1,6 @@
 ; Kernel entry points
 CURSOR	=	$FF35		;enable (C=0) or disable (C=1) cursor
+READST	=	$FFB7		;serial status. Bit 6 is end of file
 SETLFS	=	$FFBA		;set LA, FA, SA
 SETNAM	=	$FFBD		;set length & file name address
 OPEN	=	$FFC0		;open logical file
@@ -40,6 +41,7 @@ _BASIN			= $221e
 _BSOUT                  = $2241
 _GETIN			= $2264
 _CLALL			= $2287
+_READST			= $2381		;after the copy buffer, before End_Run
 
 ; Bridge copy buffer
 COPY_BUFFER             = $2354
