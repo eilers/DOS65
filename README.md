@@ -35,12 +35,12 @@ It was tested with
 The command control module (CCM) knowns the following commands:
 
 * DIR
-* REN \<ufn\> \<ufn\>
-* SAVE \<length\> \<drive:\>ufn (\<address\>)
-* ERA \<afn\>
+* REN ufn ufn
+* SAVE length drive:ufn (address)
+* ERA afn
 * TYPE d:ufn
-* LOAD \<ufn\> (\<address\>)
-* GO (\<address\>)
+* LOAD ufn (address)
+* GO (address)
 
 This distribution comes as a hybrid D64 image that contains the following software:
 
@@ -71,22 +71,23 @@ This distribution comes as a hybrid D64 image that contains the following softwa
 
 Please note that SysGen is not supported and therefore not included in this package. Please read [here](https://wiki.eilers-online.net/dos65) why this is the case.
 
-# Running an 8080 program
+# Running CP/M programs for the Intel 8080
 
-`RUN8080` runs one 8080 program. The disk and the keyboard stay with DOS/65, so a file the program writes is an ordinary DOS/65 file.
+`RUN8080` simulates an Intel 8080, including its memory layout (64 KB). All calls to PEM or BIOS are translated and executed natively under DOS/65. Therefore, any CP/M program written for the Intel 8080 should run. SuperCalc2 and Wordstar4 have been tested and work fine.
 
+**Please note:** 
+
+* The extended opcodes of the Z80 CPU are not (yet) implemented. Therefore, Turbo Pascal, for example, will not run!
+* `RUN8080`uses the power of the 65GS02 and will only work on the Mega65 with its 384 KByte RAM!
+
+I strongly recommend that you switch to the drive where the program you want to run is located. Otherwise the program will access the wrong disk. For instance: `run8080` is on drive `a:` and the program to execute is on drive `b:` : 
+
+```bash
+cd b:
+a:run8080 <program> [arguments]
 ```
-run8080 <program> [arguments]
-```
 
-The first word is the program name. `.COM` is added when you do not type an extension. A drive letter is allowed. With the program disk in drive B:
-
-```
-run8080 b:sc2
-run8080 b:ws
-```
-
-Text after the program name is passed to the program. When the program exits, the DOS/65 prompt returns. SuperCalc 2 and WordStar 4 are not on the distribution disk. They stay on their own disks.
+`prgrogram` is the program name. `.COM` is added when you do not type an extension. The arguments are passed to the program you want to run.
 
 # How to build
 
@@ -107,6 +108,7 @@ You might update your core for the Mega65 if the 1541 emulation is missing.
 You find the original documenation in the [docs](./docs) folder.
 
 # Other DOS/65 Repositories
+
 <https://github.com/floobydust/DOS-65-Version-3.21/tree/main/DOS65V321>
 
 <https://github.com/osiweb/DOS65/tree/master/DOS65_v2.1>
