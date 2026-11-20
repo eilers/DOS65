@@ -4,6 +4,11 @@
 BSA = ../../bsa/bsa
 CTOOLS = ../../ctools/src/ctools
 DISK = ../../src/c65/disk/dos65_cpm.d64
+# The bench requires Python 3.11 and py65, the 6502 emulator imported
+# by the DOS/65 model. The test target installs both into .venv.
+PYTHON = python3.11
+VENV = .venv
+PY = $(VENV)/bin/python
 
 .PHONY: all disk test
 
@@ -18,5 +23,11 @@ RUN8080.COM: run8080.asm handlers.asm
 disk: RUN8080.COM
 	@if [ -f $(DISK) ]; then $(CTOOLS) $(DISK) p RUN8080.COM; else echo "disk image absent, skipped"; fi
 
-test: RUN8080.COM
-	python3 -m pytest -q
+$(VENV)/.installed: pyproject.toml
+	$(PYTHON) -m venv $(VENV)
+	$(PY) -m pip install -q -e '.[test]'
+	touch $@
+
+test: RUN8080.COM $(VENV)/.installed
+	$(PY) -c 'from bench.testdata import fetch_cpu_tests; fetch_cpu_tests()'
+	$(PY) -m pytest -q

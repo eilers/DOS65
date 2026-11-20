@@ -41,14 +41,21 @@ def cpu_test(name: str) -> Path | None:
     return path if path.exists() else None
 
 
-def fetch_cpu_tests() -> list[Path]:
+def fetch_cpu_tests(names: tuple[str, ...] | None = None) -> list[Path]:
+    """Download CPU test programs that are not already present.
+
+    With no names, this fetches the two short diagnostics the test
+    suite runs. ``fetch_cpu_tests(tuple(CPU_TESTS))`` also fetches the
+    long suites.
+    """
+    wanted = ("TST8080.COM", "8080PRE.COM") if names is None else names
     target = testdata_dir()
     target.mkdir(parents=True, exist_ok=True)
     fetched = []
-    for name, url in CPU_TESTS.items():
+    for name in wanted:
         path = target / name
         if not path.exists():
-            with urllib.request.urlopen(url, timeout=30) as response:
+            with urllib.request.urlopen(CPU_TESTS[name], timeout=30) as response:
                 path.write_bytes(response.read())
         fetched.append(path)
     return fetched
