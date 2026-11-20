@@ -8,14 +8,18 @@ MERGER= ../../scripts/merge_d64.py
 CPM_BASE_DISK= disk/dos65_cpm_base.d64
 CPM_DISK= disk/dos65_cpm.d64
 C64_DISK= disk/dos65_c64.d64
-DISK= disk/dos65_V2.19.D64
+DISK= disk/dos65_V2.19_Sim-1.01.D64
+# run8080 is the 8080 emulator. Its COM file is built in its own directory
+# and copied onto the CP/M side, so the merged distribution disk contains it.
+RUN8080_DIR= ../../tools/run8080
+RUN8080= $(RUN8080_DIR)/RUN8080.COM
 
 .PHONY: all clean load xemu distribution
 
 all: $(BSA) $(CTOOLS) $(CC1541) c65sim.bin c65boot.bin c65run.prg # c65loader.prg 
 clean:
 	rm -f *.bin *.lst *.sym *.prg *_map.png *_map.txt disk/*.COM disk/*.C65 ../*.lst 
-	rm -f $(DISK) $(CPM_BASE_DISK) $(CPM_DISK) $(C64_DISK)
+	rm -f $(DISK) $(CPM_BASE_DISK) $(CPM_DISK) $(C64_DISK) $(RUN8080)
 	$(MAKE) -C ../../bsa clean
 	$(MAKE) -C ../../ctools/src clean
 	$(MAKE) -C ../../cc1541 clean
@@ -93,10 +97,14 @@ $(CPM_BASE_DISK): all
 	rm -f $(CPM_BASE_DISK)
 	$(CFORMAT) -0 $(CPM_BASE_DISK)
 
-$(CPM_DISK): $(CPM_BASE_DISK) all $(COM_FILES)
+$(RUN8080): $(RUN8080_DIR)/run8080.asm $(RUN8080_DIR)/gen_handlers.py $(BSA)
+	$(MAKE) -C $(RUN8080_DIR)
+
+$(CPM_DISK): $(CPM_BASE_DISK) all $(COM_FILES) $(RUN8080) Makefile
 	cp $(CPM_BASE_DISK) $(CPM_DISK)
 	$(CTOOLS) $(CPM_DISK) p disk/*.COM
 	$(CTOOLS) $(CPM_DISK) p ../basic/*.BAS
+	$(CTOOLS) $(CPM_DISK) p $(RUN8080)
 	#$(CTOOLS) $(CPM_DISK) p ../RUN207.ASM
 
 $(C64_DISK): all
