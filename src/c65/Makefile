@@ -14,7 +14,7 @@ DISK= disk/dos65_V2.19_Sim-1.01.D64
 RUN8080_DIR= ../../tools/run8080
 RUN8080= $(RUN8080_DIR)/RUN8080.COM
 
-.PHONY: all clean load xemu distribution
+.PHONY: all clean load xemu distribution test
 
 all: $(BSA) $(CTOOLS) $(CC1541) c65sim.bin c65boot.bin c65run.prg # c65loader.prg 
 clean:
@@ -90,6 +90,11 @@ ASM_FILES = MORE202.ASM \
 # Generate COM file names by replacing .ASM with .COM
 COM_FILES = $(ASM_FILES:.ASM=.COM)
 
+# Host-side tests for the transient programs. Each name is a pytest
+# file in tools/run8080/tests. The Commodore copy and directory
+# programs are the first entries. Add the next program's file here.
+PROGRAM_TESTS = test_cbm_utils.py
+
 # Pattern rule to build COM files from ASM files
 %.COM: $(BSA) ../%.ASM
 	mkdir -p disk
@@ -118,3 +123,11 @@ $(C64_DISK): all
 
 distribution: $(CPM_BASE_DISK) $(CPM_DISK) $(C64_DISK) $(MERGER)
 	python3 $(MERGER) --c64 $(C64_DISK) --cpm $(CPM_DISK) --cpm-base $(CPM_BASE_DISK)  --out $(DISK)
+
+# The Python 3.11 environment lives with the 8080 bench because that
+# is where py65, the 6502 emulator these tests run on, is installed.
+$(RUN8080_DIR)/.venv/.installed: $(RUN8080_DIR)/pyproject.toml
+	$(MAKE) -C $(RUN8080_DIR) .venv/.installed
+
+test: $(BSA) $(RUN8080_DIR)/.venv/.installed
+	cd $(RUN8080_DIR) && .venv/bin/python -m pytest -q $(addprefix tests/,$(PROGRAM_TESTS))

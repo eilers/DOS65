@@ -29,8 +29,10 @@
 ;
 ;Reading a byte does not by itself say that the file has ended.
 ;The kernel's status byte has to be read after the byte. Bit 6
-;means end of file, and the byte that came with it is a carriage
-;return, not file data. That status entry is READST at $FFB7.
+;means end of file, and the kernel raises it on the last real
+;byte, so that byte is kept. The next read has the read-timeout
+;bit set as well, and the byte that comes with it is not data.
+;That status entry is READST at $FFB7.
 
 ;kernel entries. Same numbers on a Commodore 64 and a MEGA65.
 readst	=	$ffb7		;serial status. Bit 6 is end of file
@@ -498,25 +500,29 @@ pr3	jsr	crlf
 	rts
 
 ;One byte from the Commodore file.
-;Carry clear: the byte is in A.
-;Carry set and A = 0: end of file. The carriage return that came
-;with that status is not file data, so it is discarded.
+;Carry clear: the byte is in A. Status $40 is included here,
+;because that is the last real byte and not a marker after it.
+;Carry set and A = 0: nothing more to read. The kernel answers
+;the following read, and the first read of an empty file, with
+;end of file and the read timeout together ($42).
 ;Carry set and A nonzero: the status itself, a real fault.
 ;Uses tmp and tmp2. Does not use hold, reclen, or the block count.
 cbmin	jsr	basin
 	sta	tmp
 	jsr	readst
 	sta	tmp2
-	and	#$bf		;ignore the end-of-file bit for a moment
-	bne	cinbad
+	and	#$bf		;ignore the end-of-file bit
+	beq	cingood		;0 or $40: the byte is file data
+	cmp	#$02
+	bne	cinbad		;a fault other than the past-the-end read
 	lda	tmp2
 	and	#$40
-	bne	cineof
-	lda	tmp
-	clc
-	rts
-cineof	lda	#0
+	beq	cinbad		;a timeout on its own is a fault
+	lda	#0		;end of file together with the read timeout
 	sec
+	rts
+cingood	lda	tmp
+	clc
 	rts
 cinbad	lda	tmp2
 	sec
