@@ -1,7 +1,7 @@
 """Locations of external test programs.  Nothing here is stored in git.
 
 CPM2DOS65_TESTDATA   directory for downloaded CPU test programs
-                     (default: tools/cpm2dos65/tests/data/external)
+                     (default: tools/run8080/tests/data/external)
 CPM2DOS65_CPM_DIR    directory with CP/M disk images, containing prod/
                      (default: ~/Downloads/cpm)
 """
@@ -28,14 +28,7 @@ def testdata_dir() -> Path:
     env = os.environ.get("CPM2DOS65_TESTDATA")
     if env:
         return Path(env)
-    local = PACKAGE_DIR.parent / "tests" / "data" / "external"
-    if any(local.glob("*.COM")):
-        return local
-    # CPU suites downloaded for the earlier translator live next door.
-    sibling = PACKAGE_DIR.parents[1] / "cpm2dos65" / "tests" / "data" / "external"
-    if any(sibling.glob("*.COM")):
-        return sibling
-    return local
+    return PACKAGE_DIR.parent / "tests" / "data" / "external"
 
 
 def cpm_dir() -> Path:

@@ -72,7 +72,7 @@ def assemble_6502(source: str, output_name: str = "OUT.COM",
     """Assemble bsa source text.  The source must contain a .STORE directive
     that writes `output_name`."""
     own_dir = workdir is None
-    work = Path(tempfile.mkdtemp(prefix="cpm2dos65_bsa_")) if own_dir else workdir
+    work = Path(tempfile.mkdtemp(prefix="run8080_bsa_")) if own_dir else workdir
     work.mkdir(parents=True, exist_ok=True)
     try:
         asm = work / "prog.asm"
@@ -95,7 +95,7 @@ def assemble_6502(source: str, output_name: str = "OUT.COM",
 
 
 def assemble_z80_with_labels(source: str) -> tuple[bytes, dict[str, int]]:
-    with tempfile.TemporaryDirectory(prefix="cpm2dos65_z80_") as tmp:
+    with tempfile.TemporaryDirectory(prefix="run8080_z80_") as tmp:
         asm = Path(tmp) / "prog.asm"
         out = Path(tmp) / "prog.bin"
         asm.write_text(source)
