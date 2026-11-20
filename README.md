@@ -71,6 +71,34 @@ This distribution comes as a hybrid D64 image that contains the following softwa
 
 Please note that SysGen is not supported and therefore not included in this package. Please read [here](https://wiki.eilers-online.net/dos65) why this is the case.
 
+## Supported Disk Types
+
+Only disks in the CP/M file format are supported. The supported drive geometries apply to the 1541 and 1581 models.
+You can copy files between CP/M and Commodore disks with the programs: `CBMDIR`, `CBM2DOS` and `DOS2CBM`.
+Please don't forget to press `ESC+C` after switching disks!
+
+# Commodore disks
+
+`DOS2CBM`, `CBM2DOS`, and `CBMDIR` take the Commodore unit as their first parameter. That is the device number a Commodore program would use, normally 8 or 9, and it must be a number from 8 to 30. DOS/65 already uses the drive you are logged into: at the `A>` prompt that is unit 8, so the Commodore disk is unit 9. At the `B>` prompt the Commodore disk is unit 8.
+
+```
+dos2cbm <unit> <filename>
+cbm2dos <unit> <filename>
+cbmdir <unit>
+```
+
+`dos2cbm` copies one file from the current DOS/65 drive onto the Commodore disk. `cbm2dos` copies one file the other way. `cbmdir` lists every file on the Commodore disk.
+
+The filename is kept as typed on the Commodore disk, spaces included, up to 16 characters. On the DOS/65 disk the spaces are removed, and the name is cut to 8 characters before the first dot and 3 characters after it.
+
+```
+A>DOS2CBM 9 MY LONG FILE.BAS
+A>CBM2DOS 9 MY LONG FILE.BAS
+A>CBMDIR 9
+```
+
+The first command reads `MYLONGFI.BAS` from drive A and writes `MY LONG FILE.BAS` on unit 9. The second reads that Commodore file and writes `MYLONGFI.BAS` on drive A. The longer description is in [docs/Commodore File Utilities.txt](docs/Commodore%20File%20Utilities.txt).
+
 # Running CP/M programs for the Intel 8080
 
 `RUN8080` simulates an Intel 8080, including its memory layout (64 KB). All calls to PEM or BIOS are translated and executed natively under DOS/65. Therefore, any CP/M program written for the Intel 8080 should run. SuperCalc2 and Wordstar4 have been tested and work fine.
