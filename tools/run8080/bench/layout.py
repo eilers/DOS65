@@ -44,7 +44,7 @@ WINDOW = 0x2000          # 8080 $0000 is bank 4 offset $2000
 STUB = 0xE000            # 8080 addresses from here live in Attic RAM
 ATTIC_MB = 0x08
 SCREEN = 0x0800          # bank 4 offset of the MEGA65 ROM's 80 by 50 text screen
-SCREEN_BYTES = 80 * 24
+SCREEN_BYTES = 80 * 50
 
 # Why a stop left the 8080 program.  Printed, and stored at REASON.
 REASON_HLT = 1

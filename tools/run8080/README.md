@@ -52,7 +52,7 @@ The new disk has a fresh directory. CP/M attribute bits are cleared, because DOS
 
 Bank 0 is left alone. It holds kernel data and the SIM-to-kernel bridge. Banks 2 and 3 are ROM. Bank 5 is DOS/65 itself.
 
-Bank 4's first 8 KB (`$40000`–`$41FFF`) belongs to the MEGA65 ROM; its 80 by 50 text screen starts at `$40800`, and the guest draws on the top 24 rows there. The free 56 KB after it (`$42000`–`$4FFFF`) is the 8080 address range `$0000`–`$DFFF`. A 32-bit pointer's low 16 bits are the 8080 address plus `$2000`, and the high word is `$0004`. The guest's own bytes are read and written with `LDA [pointer],Z` and `STA [pointer],Z`, which do not use the memory map.
+Bank 4's first 8 KB (`$40000`–`$41FFF`) belongs to the MEGA65 ROM; its 80 by 50 text screen starts at `$40800`, and the guest draws on all 50 rows. The free 56 KB after it (`$42000`–`$4FFFF`) is the 8080 address range `$0000`–`$DFFF`. A 32-bit pointer's low 16 bits are the 8080 address plus `$2000`, and the high word is `$0004`. The guest's own bytes are read and written with `LDA [pointer],Z` and `STA [pointer],Z`, which do not use the memory map.
 
 8080 `$E000`–`$FFFF` is an 8 KB read-only stub image in Attic RAM at `$8000000`. Address 6 holds `$E000`, so BDOS appears to start there and the guest cannot grow into bank 5. A write at or above `$E000` stops the program and names the address. Fetches and reads of the stub are allowed. The stub pages are copied with an enhanced DMAgic list (megabyte option `$80`, meaning bits 20–27 of the address, started at `$D705`). If that copy does not land, `run8080` stops instead of falling into bank 0.
 
@@ -68,12 +68,12 @@ The BIOS entries BOOT and WBOOT (warm boot) leave through the normal exit. CONST
 
 `run8080` clears the whole 80 by 50 screen when it starts. The cell under the cursor blinks in reverse. The MEGA65 colour byte already has a blink bit and a reverse bit, and the video chip blinks that cell on its own. `$D031` is left alone: writing it makes the video chip rebuild the screen address from the C64-style pointer and display the wrong memory.
 
-SuperCalc 2 on this disk is installed for an ADM-3A terminal, and it draws by calling BDOS function 6. WordStar 4 on its disk is installed for an ADM-31 terminal and draws through BIOS CONOUT. Those bytes must not go through SIM console output, which drops the escape character. `run8080` interprets them onto the top 24 rows of the 80 by 50 screen. ASCII `^` (`$5E`) is stored as screen code `$1E`, the up-arrow, because screen code `$5E` is the pi symbol in the lowercase font and WordStar uses `$5E` as the caret in front of a control key. The codes of both terminals are understood:
+SuperCalc 2 on this disk is installed for an ADM-3A terminal, and it draws by calling BDOS function 6. WordStar 4 on its disk is installed for an ADM-31 terminal and draws through BIOS CONOUT. Those bytes must not go through SIM console output, which drops the escape character. `run8080` interprets them onto the full 80 by 50 screen. A program installed for fewer lines only addresses the rows it was given. Cursor positions past row 50 stay on the last row, and a line feed on that row scrolls. ASCII `^` (`$5E`) is stored as screen code `$1E`, the up-arrow, because screen code `$5E` is the pi symbol in the lowercase font and WordStar uses `$5E` as the caret in front of a control key. The codes of both terminals are understood:
 
 - Escape, `=`, row, column places the cursor. The program has already added 32 to the row and the column.
 - Control-Z, Escape `*` and Escape `+` clear the screen.
 - Escape `T` (or `t`) clears to the end of the line. Escape `Y` (or `y`) clears to the end of the screen. The cursor does not move.
-- Control-H moves the cursor left, Control-K up, Control-L right, and Control-^ (`$1E`) home. Carriage return goes to column 0. Line feed goes down one row and keeps the column; on the last row it scrolls.
+- Control-H moves the cursor left, Control-K up, Control-L right, and Control-^ (`$1E`) home. Carriage return goes to column 0. Line feed goes down one row and keeps the column; on row 50 it scrolls.
 - Other escape sequences, such as Escape `(` and Escape `)` for the display intensity, are accepted and ignored. Other control characters are ignored.
 - The MEGA65 cursor keys are translated before the program sees them: up is Control-K (`$0B`), down is Control-J (`$0A`), left is Control-H (`$08`), right is Control-L (`$0C`). Cursor down and cursor right arrive as 17 and 29. Cursor up and cursor left arrive as 145 and 157, and the System Interface Module passes those two through so this translation can see them.
 
@@ -83,7 +83,7 @@ SuperCalc 2 on this disk is installed for an ADM-3A terminal, and it draws by ca
 
 `CPUTEST` and `8080EXM` are the long suites. `8080EXM` is about three billion instructions, which is not a practical run of this bench or of one interactive session. They are not copied into the repository.
 
-The acceptance run is SuperCalc 2, from `prod/SuperCalc_v2.d81` (kept outside this tree). The test signs on, loads `SAMPLE.CAL`, types a value into the current cell, saves, and compares the saved file and the 80 by 24 screen with the same session on the CP/M model. It skips when the disk image is absent.
+The acceptance run is SuperCalc 2, from `prod/SuperCalc_v2.d81` (kept outside this tree). The test signs on, loads `SAMPLE.CAL`, types a value into the current cell, saves, and compares the saved file and the 80 by 50 screen with the same session on the CP/M model. It skips when the disk image is absent.
 
 ## Speed
 

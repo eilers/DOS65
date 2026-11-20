@@ -2,7 +2,7 @@
 
 PEM is the DOS/65 Primitive Execution Module.  BDOS is the CP/M Basic Disk
 Operating System.  An FCB is a file control block.  The screen test checks
-the 80 by 24 cell grid after the ADM-3A cursor sequences, not the raw bytes.
+the 80 by 50 cell grid after the ADM-3A cursor sequences, not the raw bytes.
 """
 
 import tempfile
@@ -34,7 +34,7 @@ def both(program: bytes, tail: str, *, files=None, script=b"", limit=2_000_000):
 
 
 def screen(machine) -> bytes:
-    """The 80 by 24 grid as ASCII: screen codes $01-$1A are the lowercase letters."""
+    """The 80 by 50 grid as ASCII: screen codes $01-$1A are the lowercase letters."""
     raw = machine.bank(4)[SCREEN:SCREEN + SCREEN_BYTES]
     def decode(code):
         if 1 <= code <= 0x1A:
@@ -47,7 +47,7 @@ def screen(machine) -> bytes:
 
 def adm(stream: bytes) -> bytes:
     """The same ADM-3A/ADM-31 rules run8080 applies to console output."""
-    cells = bytearray(b" " * (80 * 24))
+    cells = bytearray(b" " * (80 * 50))
     row = col = state = 0
 
     def advance():
@@ -63,7 +63,7 @@ def adm(stream: bytes) -> bytes:
 
     def linefeed():
         nonlocal row
-        if row < 23:
+        if row < 49:
             row += 1
             return
         del cells[:80]
@@ -81,7 +81,7 @@ def adm(stream: bytes) -> bytes:
                 cells[row * 80 + col:] = b" " * (len(cells) - row * 80 - col)
             continue
         if state == 2:
-            row = min(23, max(0, byte - 32))
+            row = min(49, max(0, byte - 32))
             state = 3
             continue
         if state == 3:
@@ -207,8 +207,26 @@ def test_adm31_erase_and_cursor_controls():
     assert grid[80:90] == b"ALAA      "             # line feed keeps the column
     assert grid[2 * 80:2 * 80 + 10] == b"AAAAAAAAAA"
     assert grid[3 * 80:3 * 80 + 10] == b"AA        "
-    assert grid[4 * 80:] == b" " * (20 * 80)
+    assert grid[4 * 80:] == b" " * ((50 - 4) * 80)
     assert grid[80 + 1] == ord("L")
+
+
+def test_row_50_is_addressable_and_scrolls():
+    # Row numbers are 0 to 49.  A request past the last row stays on it,
+    # and a line feed there scrolls.
+    def at(row, col):
+        return bytes([0x1B, ord("="), 32 + row, 32 + col])
+    stream = b"\x1a" + at(49, 0) + b"A\n" + at(60, 3) + b"B"
+    program = bytearray()
+    for value in stream:
+        program += bytes([0x0E, 6, 0x1E, value, 0xCD, 0x05, 0x00])
+    program += bytes([0xC3, 0x00, 0x00])
+    ours, cpm = both(bytes(program), "rows")
+    grid = screen(ours)
+    assert grid == adm(bytes(cpm.console.output))
+    assert len(grid) == 80 * 50
+    assert grid[48 * 80] == ord("A")
+    assert grid[49 * 80 + 3] == ord("B")
 
 
 def test_read_buffer():

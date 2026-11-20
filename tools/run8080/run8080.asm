@@ -100,8 +100,14 @@ wlen	= 83
 namei	= 84
 tailat	= 85
 
-; the MEGA65 ROM keeps the 80 by 50 text screen at $40800 in bank 4
+; the MEGA65 ROM keeps the 80 by 50 text screen at $40800 in bank 4.
+; The guest terminal uses all 50 rows.  Cursor addressing adds 32 to the
+; row, and row 49 is byte 81, which still fits in one byte.
 scrhi	= $08
+rows	= 50
+last	= rows-1
+scrolln	= last*80
+blankat	= $800+scrolln
 
 	*=	$200
 	jmp	start
@@ -2001,7 +2007,7 @@ dma_to_rec:
 	sta	dir
 	jmp	dma_between
 
-; ----- ADM-3A on the top 24 rows of the 80 by 50 screen -------------------
+; ----- ADM-3A and ADM-31 on the 80 by 50 screen ---------------------------
 adm_out:
 	sta	glyph
 	lda	admst
@@ -2117,7 +2123,7 @@ do_eos:
 eos_r:
 	inc	srow
 	lda	srow
-	cmp	#24
+	cmp	#rows
 	bcs	eos_x
 	jsr	do_eol
 	jmp	eos_r
@@ -2129,7 +2135,7 @@ eos_x:
 	rts
 ad_srow:
 	lda	glyph
-	jsr	clamp24
+	jsr	clamp_row
 	sta	admsrow
 	lda	#3
 	sta	admst
@@ -2144,15 +2150,15 @@ ad_scol:
 	sta	admst
 	rts
 
-clamp24:
+clamp_row:
 	sec
 	sbc	#32
 	bcs	c24
 	lda	#0
 c24:
-	cmp	#24
+	cmp	#rows
 	bcc	c24ok
-	lda	#23
+	lda	#last
 c24ok:
 	rts
 
@@ -2176,10 +2182,10 @@ do_cr:
 do_lf:
 	inc	srow
 	lda	srow
-	cmp	#24
+	cmp	#rows
 	bcc	lf_ok
 	jsr	scroll
-	lda	#23
+	lda	#last
 	sta	srow
 lf_ok:
 	rts
@@ -3145,9 +3151,9 @@ screen_clear:
 scroll:
 	lda	#0
 	sta	dmalist
-	lda	#$30
+	lda	#<scrolln		; the 49 rows below row 0
 	sta	dmalist+1
-	lda	#$07
+	lda	#>scrolln
 	sta	dmalist+2
 	lda	#80
 	sta	dmalist+3
@@ -3177,9 +3183,9 @@ scroll:
 	lda	#0
 	sta	dmalist+4
 	sta	dmalist+5
-	lda	#$30
+	lda	#<blankat		; the last of the 50 rows
 	sta	dmalist+6
-	lda	#$07+scrhi
+	lda	#>blankat
 	sta	dmalist+7
 	lda	#4
 	sta	dmalist+8

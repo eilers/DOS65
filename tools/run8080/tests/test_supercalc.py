@@ -2,7 +2,7 @@
 
 The commercial disk image stays outside the repository.  The test skips
 when prod/SuperCalc_v2.d81 is not there.  BDOS is the CP/M disk system;
-the screen compare is the 80 by 24 ADM-3A grid, not the raw escape bytes.
+the screen compare is the 80 by 50 ADM-3A grid, not the raw escape bytes.
 """
 
 import tempfile
