@@ -65,16 +65,34 @@ This distribution comes as a hybrid D64 image that contains the following softwa
   * DOS2CBM (copy a DOS/65 file onto a Commodore disk)
   * CBM2DOS (copy a Commodore file onto the current DOS/65 drive)
   * CBMDIR (list a Commodore disk)
+  * RUN8080 (run an 8080 CP/M program)
 * Not yet included (Not working for now. Pull requests are welcome!)
   * DEBUG
 
 Please note that SysGen is not supported and therefore not included in this package. Please read [here](https://wiki.eilers-online.net/dos65) why this is the case.
 
+# Running an 8080 program
+
+`RUN8080` runs one 8080 program. The disk and the keyboard stay with DOS/65, so a file the program writes is an ordinary DOS/65 file.
+
+```
+run8080 <program> [arguments]
+```
+
+The first word is the program name. `.COM` is added when you do not type an extension. A drive letter is allowed. With the program disk in drive B:
+
+```
+run8080 b:sc2
+run8080 b:ws
+```
+
+Text after the program name is passed to the program. When the program exits, the DOS/65 prompt returns. SuperCalc 2 and WordStar 4 are not on the distribution disk. They stay on their own disks.
+
 # How to build
 
 1. Please checkout this project with `--recurse-submodules` in order to checkout the required tool chain.
 2. Jump into the folder `src/c65` and enter `make distribution`
-3. You (hopefully) find the distribution in the folder `/src/c65/disk` like this: `dos65_V<VERSION>.D64`. Please ensure that you do _not_ use the other D64 images that you find in this folder!
+3. You (hopefully) find the distribution in the folder `src/c65/disk` as `DOS65-v2.19-sim-1.01.D64`. Please ensure that you do _not_ use the other D64 images that you find in this folder!
 
 This disk is a hybrid disk that is compatible to the 1541 and can be mounted as that. You will find the other DOS/65 programs after booting.
 

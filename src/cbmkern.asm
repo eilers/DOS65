@@ -422,9 +422,12 @@ clchn	lda	#lfdat
 	jmp	clrch
 
 ;Read the error channel into stbuf.
-;stcode is 0 when the text starts with 00, 1 when it starts with
-;62 (the drive's "file not found"), and 2 for any other text.
-;Carry is clear only for 00. The channel is released before return.
+;stcode is 0 for an OK message, 1 when it starts with 62 (the
+;drive's "file not found"), and 2 for any other text. Carry is
+;clear only for OK. The channel is released before return.
+;The SIM checks a disk command by reading one byte. After a
+;successful command that byte is the first 0 of "00,OK", so the
+;text still waiting is "0,OK". That is the same answer.
 cbmstat	ldx	#lfcmd
 	jsr	chkin
 	bcs	sterr
@@ -455,8 +458,16 @@ st2	ldy	idx
 	bne	st62
 	lda	stbuf+1
 	cmp	#'0'
+	beq	stok		;the whole "00" is still there
+	cmp	#','
+	bne	st62		;not the comma of a shortened OK line
+	lda	stbuf+2
+	cmp	#'O'
 	bne	st62
-	lda	#0
+	lda	stbuf+3
+	cmp	#'K'
+	bne	st62
+stok	lda	#0
 	sta	stcode
 	clc
 	rts

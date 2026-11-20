@@ -14,6 +14,11 @@ the opening quote in one column and the file type in another, once
 the block count is printed as digits and one space. The type of a
 sequential file is SEQ. The free-space line says BLOCKS FREE with
 no period after it.
+
+The disk system and these programs share one error channel. After
+a sector command the system reads a single 0 from "00,OK" and
+leaves "0,OK" waiting. Selecting the channel again does not start
+the message over. A copy must still accept that as success.
 """
 
 from __future__ import annotations
@@ -188,21 +193,32 @@ class CommodoreMachine:
             self._dos_open()
         elif function == 16:
             self.mpu.a = 0
+            self._disk_command()
         elif function == 19:
             self.dos.pop(self._fcb_key(self._address()), None)
             self.mpu.a = 0
+            self._disk_command()
         elif function == 20:
             self._dos_read()
+            self._disk_command()
         elif function == 21:
             self._dos_write()
+            self._disk_command()
         elif function == 22:
             self._dos_make()
+            self._disk_command()
         elif function == 26:
             self._dma = self._address()
         else:
             raise AssertionError(f"PEM function {function} was not expected")
         self.mpu.x = 0
         self.mpu.y = 0
+
+    def _disk_command(self):
+        """A successful sector command rebuilds 00,OK and the system
+        reads its first 0. The next error read starts at the second."""
+        if self._error.startswith(b"00,"):
+            self._error_at = 1
 
     def _dos_open(self):
         fcb = self._address()
@@ -212,6 +228,7 @@ class CommodoreMachine:
             self.mpu.a = 0
         else:
             self.mpu.a = 255
+        self._disk_command()
 
     def _dos_make(self):
         key = self._fcb_key(self._address())
@@ -282,6 +299,7 @@ class CommodoreMachine:
                 self._error = b"00,OK,00,00\r"
             else:
                 self._error = b"62,FILE NOT FOUND,00,00\r"
+        self._error_at = 0
         # A successful open leaves A holding the last character of
         # the name. The programs only look at A when carry is set.
         self.mpu.a = self._name[-1] if self._name else 0
@@ -300,8 +318,6 @@ class CommodoreMachine:
         # is clear again. Measured after CHKIN in xemu.
         self._input = self.mpu.x
         self._status = 0
-        if self.mpu.x == LF_CMD:
-            self._error_at = 0
         self._carry(False)
 
     def _ckout(self):
@@ -325,7 +341,13 @@ class CommodoreMachine:
                 self._error_at += 1
                 # The carriage return that ends the message arrives
                 # with the end bit set. The bytes before it do not.
-                self._status = 0x40 if self.mpu.a == 0x0D else 0
+                # Reading that return resets the message to OK.
+                if self.mpu.a == 0x0D:
+                    self._status = 0x40
+                    self._error = b"00,OK,00,00\r"
+                    self._error_at = 0
+                else:
+                    self._status = 0
             return
         data = self._dir if self._sa == SA_DIR else self._open_data()
         if self._data_at >= len(data):
@@ -358,6 +380,7 @@ class CommodoreMachine:
                 if text.startswith("S0:"):
                     self.cbm.pop(text[3:].rstrip("\r"), None)
                     self._error = b"01,FILES SCRATCHED,01,00\r"
+                    self._error_at = 0
             self._status = 0
             return
         name = self._name[:-4].decode("ascii")
@@ -508,6 +531,7 @@ def test_cbm2dos_keeps_the_last_byte_and_pads_the_short_record(programs):
     )
     assert _records(machine, b"MYLONGFIBAS") == b"AB\x5a" + bytes([CTZ]) * 125
     assert "COPIED" in machine.text
+    assert "0,OK" not in machine.text
 
 
 def test_cbm2dos_empty_file_and_an_exact_record(programs):

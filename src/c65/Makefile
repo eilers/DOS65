@@ -8,7 +8,8 @@ MERGER= ../../scripts/merge_d64.py
 CPM_BASE_DISK= disk/dos65_cpm_base.d64
 CPM_DISK= disk/dos65_cpm.d64
 C64_DISK= disk/dos65_c64.d64
-DISK= disk/dos65_V2.19_Sim-1.01.D64
+VERSION="v2.19-sim-1.01"
+DISK= disk/DOS65-$(VERSION).D64
 # run8080 is the 8080 emulator. Its COM file is built in its own directory
 # and copied onto the CP/M side, so the merged distribution disk contains it.
 RUN8080_DIR= ../../tools/run8080
@@ -119,7 +120,7 @@ $(C64_DISK): all
 	mkdir -p disk
 	rm -f $(C64_DISK)
 	cp c65run.prg disk/AUTOBOOT.C65
-	$(CC1541) -n "dos/65 v2.15" -T PRG -w disk/autoboot.c65 $(C64_DISK)
+	$(CC1541) -n "$(VERSION)" -T PRG -w disk/autoboot.c65 $(C64_DISK)
 
 distribution: $(CPM_BASE_DISK) $(CPM_DISK) $(C64_DISK) $(MERGER)
 	python3 $(MERGER) --c64 $(C64_DISK) --cpm $(CPM_DISK) --cpm-base $(CPM_BASE_DISK)  --out $(DISK)
